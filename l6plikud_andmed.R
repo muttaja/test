@@ -9,7 +9,7 @@ sat = read.csv("smi_prt_13_17_pixphv-heledused.csv")
 #aga selliseid polegi, kus kõik oleks olemas...
 sat[sat == 0] = NA #0 ja NA on sama
 #sat = na.omit(sat)
-muld0 = sat$muld
+muld0 = koos$muld
 sat = subset(sat, select = -c(label,prtk,muld))
 
 
@@ -98,15 +98,19 @@ require(nlme)
 
 require(lme4)
 
-start = Sys.time()
-for(band in bands){
-  data_band = data[data$band == band,]
-  mm1 = glmer(value ~ factor(SID) + aa +(1|ylelend), data = data_band, na.action = na.exclude)
-  data$pred_glmer[data$band == band] = predict(mm1, data_band, level = 0)
-}
-end = Sys.time()
+# start = Sys.time()
+# for(band in bands){
+#   data_band = data[data$band == band,]
+#   mm1 = glmer(value ~ factor(SID) + aa +(1|ylelend), data = data_band, na.action = na.exclude)
+#   data$pred_glmer[data$band == band] = predict(mm1, data_band, level = 0)
+# }
+# end = Sys.time()
+# 
+# end - start
+# #save(data, file = "sat_glmer.RData")
+setwd("A:/MAKA")
+load(file = "sat_glmer.RData")
 
-end - start
 
 #kumb täpsem?
 test1 = na.omit(data)
@@ -170,10 +174,14 @@ koos16_17 = rbind(koos17,koos16[!(koos16$aproovitykk_id %in% koos17$aproovitykk_
 #jah, ainult viimane lidar
 
 nkoos = names(koos); nkoos[2] = "SID"; names(koos) = nkoos;
+#2. on "aproovitykk_id", 10. on "aproovitykkosa_id"
 nlidar = names(koos)[c(2,233:331, 334:416)]
 lidar = koos[,nlidar]
 
-sat18_lidar = merge(sat18w, lidar, by = "SID", all.x = T)
+#966 juhul 972-st on SID olemas lidari andmetes
+sat18_lidar = merge(sat18w, lidar, by = "SID", all = T)
+sat18_lidar = na.omit(sat18_lidar) #nüüd 966 ja järgnevat jama pole vaja
+tst = head(sat18_lidar)
 
 prc1 = prcomp(sat18_lidar[,-1])
 
@@ -207,8 +215,8 @@ cumsum(prc1$sdev**2 / sum(prc1$sdev**2))
 
 
 muld = data.frame(muld = muld0)
-muld$SID = sat$aproovitykk_id
-muld$cat = sat$cat
+muld$SID = koos$SID
+muld$cat = koos$cat
 
 head(muld)
 #mnjah, NA jälle sees, 28 unikaalsel juhul:
@@ -228,8 +236,8 @@ asd1 = muldNA
 asd = asd1 %>% group_by(SID) %>% summarize (muld1 = names(which.max(table(muld))))
 
 
-muld = merge(muld, asd, by = "SID", all.x = T)
-muld1 = muld %>% group_by(SID) %>% sample_n(1)
+muldx = merge(muld, asd, by = "SID", all.x = T)
+muld1 = muldx %>% group_by(SID) %>% sample_n(1)
 muld1 = subset(muld1, select = c("SID", "muld1"))
 
 
@@ -254,5 +262,38 @@ table(koos$maakatgrp) #mets 1055 juhul
 
 test1 = head(koos,10)
 
+###
+mets = data.frame(pcmuld$x[,1:8])
+mets$SID = sat18_lid_muld$SID
+#test
+
+table(koos[koos$SID %in% mets$SID,]$maakatgr)
+#end test
+mets1 = mets[mets$SID %in% koos[koos$maakatgrp == "ME",]$SID,] #aint 390 jäi nii...
+#et knn töötaks
+mets1$cl = "cl"
+
+#mahud vaja saada
+names_taks = names(koos)[c(2,19,25:31)]
+taks_uus = koos[koos$SID %in% mets1$SID,names_taks]
+taks_uus = na.omit(taks_uus)
+taks_uus$ARV_VMA = taks_uus$arv_maht_es*taks_uus$MA / 100
+taks_uus$ARV_VKU = taks_uus$arv_maht_es*taks_uus$KU / 100
+taks_uus$ARV_VKS = taks_uus$arv_maht_es*taks_uus$KS / 100
+taks_uus$ARV_VHB = taks_uus$arv_maht_es*taks_uus$HB / 100
+taks_uus$ARV_VLM = taks_uus$arv_maht_es*taks_uus$LM / 100
+taks_uus$ARV_VLV = taks_uus$arv_maht_es*taks_uus$LV / 100
+taks_uus$ARV_VKX = taks_uus$arv_maht_es*taks_uus$KX / 100
+
+mets2 = mets1[mets1$SID %in% taks_uus$SID,]
+
+
+#lineaarne mudel tüvemahule?
+datmets = merge(mets2, taks_uus, by = "SID")
+forumla = as.formula(arv_maht_es ~ PC1 + PC2 + PC3 + PC4 + PC5 + PC6 + PC7 + PC8)
+mod = step(lm(forumla, data = datmets))
+p1 = predict(mod, newdata = datmets)
+head(p1) #läheb negatiivseks, aga see vist kõige vöiksem mure
+head(datmets$arv_maht_es)
 
 
