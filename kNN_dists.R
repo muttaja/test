@@ -386,10 +386,40 @@ SID_temp = SID_temp[!(SID_temp %in% valja1)] #228
 
 #35345
 
+#siit tagasi proportsioonide peale:
+
+PROPS_HINNANG_JA_TODE = data.frame(
+  cbind(
+    HINNANG_RAIE_JA_TODE$SID_raie1,
+    round(HINNANG_RAIE_JA_TODE[,2:8] / rowSums(HINNANG_RAIE_JA_TODE[,2:8]),2),
+    round(HINNANG_RAIE_JA_TODE[,9:15] / rowSums(HINNANG_RAIE_JA_TODE[,9:15]),2)
+  )
+)
+
+par(mfrow=c(1,1))
+plot(PROPS_HINNANG_JA_TODE$ARV_VMA, PROPS_HINNANG_JA_TODE$ARV_VMA.1)
+plot(PROPS_HINNANG_JA_TODE$ARV_VKU, PROPS_HINNANG_JA_TODE$ARV_VKU.1)
+plot(PROPS_HINNANG_JA_TODE$ARV_VKS, PROPS_HINNANG_JA_TODE$ARV_VKS.1)
+plot(PROPS_HINNANG_JA_TODE$ARV_VHB, PROPS_HINNANG_JA_TODE$ARV_VHB.1)
+
+
 
 #kui ainult proportsioonid?
 data_puud = koos[koos$SID %in% SID_temp,c("MA", "KS", "KU", "HB", "LM", "LV", "KX")]
 
+SID_temp = SID_temp
+SID_raie1 = taks_uus[taks_uus$SID %in% SID_temp,"SID"]
+mets_raie = mets22
+mets_raie1 = mets_raie[mets_raie$SID %in% SID_temp,]
+HINNANG_RAIE = fun_agre(mets_raie1, data_puud, nrcomp = 10)
 
+intsct = intersect(mets_raie$SID,koos$SID); intsct = intersect(intsct, SID_temp)
+data_puud_raie = koos[koos$SID %in% intsct,c("MA", "KS", "KU", "HB", "LM", "LV", "KX")]
 
+HINNANG_RAIE_JA_TODE = data.frame(cbind(SID_raie1, HINNANG_RAIE, round(data_puud_raie,0)))
+par(mfrow=c(1,1))
+plot(HINNANG_RAIE_JA_TODE$ARV_VMA, HINNANG_RAIE_JA_TODE$ARV_VMA.1)
+plot(HINNANG_RAIE_JA_TODE$ARV_VKU, HINNANG_RAIE_JA_TODE$ARV_VKU.1)
+plot(HINNANG_RAIE_JA_TODE$ARV_VKS, HINNANG_RAIE_JA_TODE$ARV_VKS.1)
+plot(HINNANG_RAIE_JA_TODE$ARV_VHB, HINNANG_RAIE_JA_TODE$ARV_VHB.1)
 
