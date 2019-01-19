@@ -111,6 +111,11 @@ EKSPERTH_HINNANG_TODE_MREG = data.frame(
 names(EKSPERTH_HINNANG_TODE_MREG) = c("SID",paste(rep(c("MA", "KU", "KS", "HB", "LV", "LM", "KX"),4),
                                          rep(c("EKS_VALIK","HINNANG","TODE","MREG"), each = 7), sep = "."))
 
+
+# #save(data, file = "sat_glmer.RData")
+setwd("A:/MAKA")
+save(EKSPERTH_HINNANG_TODE_MREG, file = "EKSPERT.RData")
+
 dat = EKSPERTH_HINNANG_TODE_MREG
 png(filename="EKSPERT_KNN_HINNANG.png")
 par(mfrow=c(3,3))
@@ -124,6 +129,7 @@ plot(dat$KX.EKS_VALIK, dat$KX.TODE)
 dev.off()
 
 dat = dat[dat$SID %in% SID100,]
+save(dat, file = "EKSPERT_100.RData")
 png(filename="EKSPERT_KNN_HINNANG_100.png")
 par(mfrow=c(3,3))
 plot(dat$MA.EKS_VALIK, dat$MA.TODE)
