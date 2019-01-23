@@ -28,6 +28,7 @@ lepp <- raster(all_tifs[8])
 ###
 
 intsct = intersect(mets_raie$SID,koos$SID); intsct = intersect(intsct, SID_temp)
+intsct = sidxx #vaata üle, mis õiged ID-d siis lõpuks on
 coords = koos[koos$SID %in% intsct, c("koord_e", "koord_n")]
 
 mannid <- extract(mand, coords) / 100
@@ -106,6 +107,8 @@ dev.off()
 EKSPERTH_HINNANG_TODE_MREG = data.frame(
   cbind(PROPS_HINNANG_JA_TODE,EKSPERTHINNANG_RAIE_JA_TODE1, mannid, kuused, kased, haavad, lepad, sanglepad, muud)
 )
+#järjekord: Hinnang; tõde; eksperthinnag; metsaregister;
+#nii et tõenäoliselt plottisin täiesti valesid asju #21.01.2019
 
 
 names(EKSPERTH_HINNANG_TODE_MREG) = c("SID",paste(rep(c("MA", "KU", "KS", "HB", "LV", "LM", "KX"),4),
@@ -113,11 +116,11 @@ names(EKSPERTH_HINNANG_TODE_MREG) = c("SID",paste(rep(c("MA", "KU", "KS", "HB", 
 
 
 # #save(data, file = "sat_glmer.RData")
-setwd("A:/MAKA")
-save(EKSPERTH_HINNANG_TODE_MREG, file = "EKSPERT.RData")
-
-dat = EKSPERTH_HINNANG_TODE_MREG
-png(filename="EKSPERT_KNN_HINNANG.png")
+# setwd("A:/MAKA")
+# save(EKSPERTH_HINNANG_TODE_MREG, file = "EKSPERT.RData")
+# 
+# dat = EKSPERTH_HINNANG_TODE_MREG
+# png(filename="EKSPERT_KNN_HINNANG.png")
 par(mfrow=c(3,3))
 plot(dat$MA.EKS_VALIK, dat$MA.TODE)
 plot(dat$KU.EKS_VALIK, dat$KU.TODE)
@@ -126,11 +129,11 @@ plot(dat$HB.EKS_VALIK, dat$HB.TODE)
 plot(dat$LV.EKS_VALIK, dat$LV.TODE)
 plot(dat$LM.EKS_VALIK, dat$LM.TODE)
 plot(dat$KX.EKS_VALIK, dat$KX.TODE)
-dev.off()
+# dev.off()
 
-dat = dat[dat$SID %in% SID100,]
-save(dat, file = "EKSPERT_100.RData")
-png(filename="EKSPERT_KNN_HINNANG_100.png")
+# dat = dat[dat$SID %in% SID100,]
+# save(dat, file = "EKSPERT_100.RData")
+# png(filename="EKSPERT_KNN_HINNANG_100.png")
 par(mfrow=c(3,3))
 plot(dat$MA.EKS_VALIK, dat$MA.TODE)
 plot(dat$KU.EKS_VALIK, dat$KU.TODE)
@@ -139,7 +142,7 @@ plot(dat$HB.EKS_VALIK, dat$HB.TODE)
 plot(dat$LV.EKS_VALIK, dat$LV.TODE)
 plot(dat$LM.EKS_VALIK, dat$LM.TODE)
 plot(dat$KX.EKS_VALIK, dat$KX.TODE)
-dev.off()
+# dev.off()
 
 
 

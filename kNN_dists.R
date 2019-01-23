@@ -4,7 +4,7 @@ require(FNN)
 #dists = knn.cv(train = data4all[,3:6], cl = data4all$ENAMUS, k = 10) #algne asi
 #nüüd alõpliku andmestiku põhjal:
 #dists = knn.cv(train = data4all[,3:6], cl = data4all$ENAMUS, k = 10)
-dists = knn.cv(train = mets2[,1:8], cl = mets2$cl, k = 10)
+dists = knn.cv(train = mets2[,1:8], cl = mets2$cl, k = 7)
 
 #tore oleks kuskil mignit põlve näha
 dist1 = attr(dists,"nn.dist")
@@ -60,9 +60,9 @@ indxprops = cbind(index1, props)
 #07.12.2018: kasutame nüüd täielist andmestikku;
 data_puud = taks_uus[,puud]
 
-agre <- function(arg){
+agre <- function(arg,k){
   #"arg"-ist osa indexid, osa neile vastavad propsid
-  indx = arg[1:10]; props = arg[11:20]
+  indx = arg[1:k]; props = arg[(k+1):(2*k)]
   colsums = colSums(data_puud[indx,]*props)
   colsums
 }
