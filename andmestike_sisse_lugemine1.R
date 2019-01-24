@@ -83,9 +83,10 @@ end = Sys.time()
 end
 end - start
 #Time difference of 1.803989 hours
-save(data1, file = "data_glmer1.RData")
+#save(data1, file = "data_glmer1.RData")
 
 #võtab mõned tunnid aega, seetõttu panin tulemused kirjale kaasa:
+setwd("A:/MAKA/d2_13.11.2018_esimene_andmekaust_nimi_korrastamata/naidised/SMI")
 load(file = "data_glmer.RData")
 
 #tagasi laia formaati:
