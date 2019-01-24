@@ -4,54 +4,42 @@
 koos_mets = koos[(koos$maakatsgrp == "M" & koos$maakatgrp == "ME"),] #miks NA-d sisse j‰‰vad kui panna aint 1. tingimus?
 koos_mets$aasta_erinevus = 2018 - koos_mets$aasta
 
-k1 = koos_mets[!(koos_mets$aproovitykk_id %in% dres1$SID),]
-k2 = koos_mets[!(koos_mets$aproovitykk_id %in% c(dres1$SID, dres2$SID[-12],dres3$SID[-7],dres4$SID,dres5$SID[1:2],valja$aproovitykk_id)),]
-km = lm(inv_korgus ~ K_Elev_P90 + H_Elev_P90 + aasta_erinevus, data = k2)
-summary(km) #aasta_erinevus negatiivse kordajaga, sest praegu n‰itaks lidar muidu liiga kırget metsa. kordaja 3.3, ehk 33cm aastas juurdekasv? palju natuke!
-pk = predict(km, data = k2)
-res = pk - k2$inv_korgus
-dres = data.frame(SID = k2$aproovitykk_id, res = res)
-plot(k2$inv_korgus, pk)
-hist(k2$K_Elev_P90 - k2$H_Elev_P90)
+load(file = "korgus_valja.RData")
+k1 = koos_mets[!(koos_mets$aproovitykk_id %in% korgus_valja),]
+km1 = lm(inv_korgus ~ K_Elev_P90 + H_Elev_P90 + aasta_erinevus, data = k1)
+summary(km1) #aasta_erinevus negatiivse kordajaga, sest praegu n‰itaks lidar muidu liiga kırget metsa. kordaja 3.3, ehk 33cm aastas juurdekasv? palju natuke!
+pk1 = predict(km1, data = k1)
+res1 = pk1 - k1$inv_korgus
+resdf1 = data.frame(SID = k1$aproovitykk_id, res = res1)
+plot(k1$inv_korgus, pk1)
 
-
-dres1 = dres[dres$res < -200,] #7 raiet ja ¸ks pıld!
-dres2 = dres[dres$res < -100,] #11. metsa ja elekrtriliini piiril. Vıimalik, et liinialust on ka puhastatud. 12. ei ole lihtsalt homog.
-dres3 = dres[dres$res < -100,] #7. see, mis eelmises faasis sisse j‰i; 11. pıld, ¸lej‰‰nud raiesmikud
-dres4 = dres[dres$res < -100,] #1. raoesmik, aga mitu s‰ilikpuud
-dres5 = dres[dres$res < -100,] #3 imelik
-
-dres6 = dres[dres$res > 200,] #kıik piiril paiknevad juhud! ehk probleem on koordinaatide t‰psuses!
+rs1 = resdf1[resdf1$res < -100,]
 
 link = "https://xgis.maaamet.ee/maps/XGis?app_id=MA29&user_id=at&LANG=1&WIDTH=1220&HEIGHT=1263&zlevel=12,688213.00000001,6446066.9999998&setlegend=HMAMULD_YLD=0,HMAHYBR_ALUS01_29=1,HMAHYBR_ALUS02_29=0"
 koos_mets$link = str_replace(link, str_sub(link, 98, 103),as.character(koos_mets$koord_e))
 koos_mets$link = str_replace(koos_mets$link, str_sub(link, 114,120),as.character(koos_mets$koord_n -1))
 
-lnk = koos_mets[koos_mets$aproovitykk_id == 82493,]$link; browseURL(lnk, browser = getOption("browser"),encodeIfNeeded = FALSE)
+lnk = koos_mets[koos_mets$aproovitykk_id == rs1[2,1],]$link; browseURL(lnk, browser = getOption("browser"),encodeIfNeeded = FALSE)
 
 
-#korgus 0?
+#kırguse prognoos ~0?
 hist(koos_mets[koos_mets$arv_maht_es < 10,]$inv_korgus) #siit mets kırgugusega ¸le 150 v‰lja?
 valja = koos_mets[koos_mets$arv_maht_es < 10 & koos_mets$inv_korgus > 150 ,] 
 
 
 #step
-
 frm = as.formula(paste("inv_korgus", paste(c(lidar_intless, "aasta_erinevus"), collapse = "+"), sep = " ~ "))
-
-m1 = lm(frm, k2)
+m1 = lm(frm, k1)
 m_step = step(m1)
 summary(m_step)
-
-pstep = predict(m_step, data = k2)
-plot(k2$inv_korgus, pstep)
-
-resstep = pstep - k2$inv_korgus
-stepres = data.frame(SID = k2$aproovitykk_id, res = resstep)
-
+pstep = predict(m_step, data = k1)
+plot(k1$inv_korgus, pstep)
+resstep = pstep - k1$inv_korgus
+stepres = data.frame(SID = k1$aproovitykk_id, res = resstep)
 st1 = stepres[stepres$res < - 100,]
 lnk = koos_mets[koos_mets$aproovitykk_id == st1[5,1],]$link; browseURL(lnk, browser = getOption("browser"),encodeIfNeeded = FALSE)
 #1 - midagi raiutud, 2 - piiril, 3 - midagi raiutud, 4. kena
+
 
 #kuidas minu v‰ljavalituid prognoosib?
 ksx = koos[koos$aproovitykk_id %in% sidxx,]
@@ -92,5 +80,5 @@ plot(kms18$arv_maht_es,(df18$pred - df18$true))
 
 
 #kırguse prognoosimudelist v‰lja j‰etud
-korgus_valja = c(dres1$SID, dres2$SID[-12],dres3$SID[-7],dres4$SID,dres5$SID[1:2],valja$aproovitykk_id)
+#korgus_valja = c(dres1$SID, dres2$SID[-12],dres3$SID[-7],dres4$SID,dres5$SID[1:2],valja$aproovitykk_id)
 #save(korgus_valja, file = "korgus_valja.RData")
