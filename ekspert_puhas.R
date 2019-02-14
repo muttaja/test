@@ -6,6 +6,7 @@ fun_agre_epa = function(data, data_puud, k)
   kk = k+1
   dists = knn.cv(train = data[,2:(dim(data)[2]-1)], cl = data$cl, k = kk)
   dist1 = attr(dists,"nn.dist")
+  dist1 = dist1 + 1e-5 #et kaugused ei saaks 0 olla. on see vajalik?
   index1 = attr(dists,"nn.index")
   props = apply(dist1, 1, epa)
   props = t(props)

@@ -781,6 +781,7 @@ fun_vars = function(vars, n, rn){
   }
   final = cbind(vars, vars_RSS[vars_RSS > quantile(vars_RSS, 0.5)])
   to_return = list("seis1" = vaheseis_1, "seis2" = vaheseis_2,"seis3" = vaheseis_3, "final" = final)
+  to_return
 }
 
 testfun = function(n, vars, data, rn = 2, liik = 1, aic_fun = aic_knn4){
@@ -908,6 +909,13 @@ sat_test250_rn5$final
 hist(as.numeric(sat_test50_rn5$seis1[,2]));hist(as.numeric(sat_test250_rn5$seis1[,2]))
 
 
-Sys.time(); sat50_rn4_UUS = fun_vars(vars,50, rn = 4); Sys.time()
+Sys.time(); sat50_rn4_UUS = fun_vars(vars, 50, rn = 5); Sys.time()
 
+test100a = testfun1(100, test_var = vars, samp_var = vars, data = data0[,c("SID", vars, "cl")], rn = 4, liik = 1, aic_fun = aic_weighted)
+par(mfrow = c(1,1)); hist(test100a)
+vars[test100a > 1]; test100a[test100a > 1]
+test200 = testfun1(200, test_var = vars[test100a > 1], samp_var = vars[test100a > 1], data = data0[,c("SID", vars, "cl")], rn = 4, liik = 1, aic_fun = aic_weighted)
+hist(test200)
 
+vars[test100a > 1][test200 > 0]; test200[test200 > 0]
+plot(sort(test200), type = "o")

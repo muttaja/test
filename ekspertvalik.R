@@ -445,11 +445,11 @@ browseURL(lnk, browser = getOption("browser"),encodeIfNeeded = FALSE)
 #78150 - kena mets.
 
 v2lja3 = c(124301, 124267, 80853, 78148, 35079)
-
+nms = names(sat18_lidar);nms[1] = "SID";names(sat18_lidar) = nms
 sidxx = sidxx[!(sidxx %in% v2lja3)]
 data_puud = taks_uus[taks_uus$SID %in% sidxx, puud]
-data = sat18_lidar[sat18_lidar$SID %in% sidxx,]
-data10 = data; data10[,2:243] = scale(data[,2:243]);
+data10 = sat18_lidar[sat18_lidar$SID %in% sidxx,]
+data10[,2:243] = scale(data10[,2:243]);
 
 dex = data10[,c("SID",eksp_all3)]
 dex[,-1] = t((t(as.matrix(dex[,-1])))*w3_all1)
@@ -485,6 +485,7 @@ fun_agre_epa = function(data, data_puud, k)
   kk = k+1
   dists = knn.cv(train = data[,2:(dim(data)[2]-1)], cl = data$cl, k = kk)
   dist1 = attr(dists,"nn.dist")
+  dist1 = dist1 + 1e-8 #kui lähim naaber on kaugusel 0
   index1 = attr(dists,"nn.index")
   props = apply(dist1, 1, epa)
   props = t(props)
@@ -710,7 +711,7 @@ plot(rss, type = "o")
 rss_sqw
 which.min(rss_sqw); min(rss_sqw) #6.024464
 which.min(rss); min(rss) #5.906907, parem ja selgem graafik ka!
-#4 tunnust on ilmselgelt liiga vähe!
+
 
 #
 H_eks1 = fun_agre_epa(dex, data_puud, k = 6); H1 = H_eks1 / rowSums(H_eks1)
@@ -747,7 +748,54 @@ plot(rss, type = "o", xlab = " naabreid")
 plot(rss_sqw, type = "o", xlab = "naareid")
 dev.off()
 
+############ esimene katsetus mitte-vigase andmestikugam, ehk vahed ka sees! #############
+
+dex = data10[,c("SID","B02_kevad1")]
+dex = dex[dex$SID %in% sidxx,]
+dex[,-1] = t((t(as.matrix(dex[,-1]))))#*bw - ta
+dex$cl = "cl"
+
+nr_neigh = function(k){
+  H_eks1 = fun_agre_epa(dex, data_puud, k = k); H1 = H_eks1 / rowSums(H_eks1)
+  data_puud_raie_props = data_puud / rowSums(data_puud)
+  
+  EH1 = data.frame(cbind(sidxx, H1, data_puud_raie_props))
+  names(EH1) = c("SID",paste(rep(c("MA", "KU", "KS", "HB", "LV", "LM", "KX"),2),
+                             rep(c("EKS_VALIK","TODE"), each = 7), sep = "."))
+  
+  rsdls = (EH1[,2:8] - EH1[,9:15])
+  w = colSums(EH1[,9:15]) / dim(EH1[,9:15])[1]
+  cols = colSums(rsdls**2)
+  RSS_col = cols*w
+  sum(RSS_col)
+}
+
+rss= c()
+for(k in 1:20){
+  rss[k] = nr_neigh(k)
+}
+
+plot(rss, type = "o")
+which.min(rss); min(rss)
+#kaalud ikka ei aita
+
+H_eks1 = fun_agre_epa(dex, data_puud, k = 10); H1 = H_eks1 / rowSums(H_eks1)
+data_puud_raie_props = data_puud / rowSums(data_puud)
+
+EH1 = data.frame(cbind(sidxx, H1, data_puud_raie_props))
+names(EH1) = c("SID",paste(rep(c("MA", "KU", "KS", "HB", "LV", "LM", "KX"),2),
+                           rep(c("EKS_VALIK","TODE"), each = 7), sep = "."))
+
+rsdls = (EH1[,2:8] - EH1[,9:15])
+w = colSums(EH1[,9:15]) / dim(EH1[,9:15])[1]
+cols = colSums(rsdls**2)
+RSS_col = cols*w
+sum(RSS_col) #cexp: 5.430137;  4.702094 koos lidariga;
 
 
+plot(EH1$MA.EKS_VALIK, EH1$MA.TODE)
+plot(EH1$KU.EKS_VALIK, EH1$KU.TODE)
+plot(EH1$KS.EKS_VALIK, EH1$KS.TODE)
+plot(EH1$HB.EKS_VALIK, EH1$HB.TODE)
 
 
