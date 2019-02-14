@@ -42,9 +42,10 @@ lnk = koos_mets[koos_mets$aproovitykk_id == st1[5,1],]$link; browseURL(lnk, brow
 
 
 #kuidas minu väljavalituid prognoosib?
+load(file = "SID_OK.RData")
 ksx = koos[koos$aproovitykk_id %in% sidxx,]
 ksx$aasta_erinevus = 2018 - ksx$aasta
-pk = predict(km, newdata = ksx) #wtf, kuidas siin 905?
+pk = predict(km1, newdata = ksx) #wtf, kuidas siin 905?
 res = pk - ksx$inv_korgus
 dres = data.frame(SID = ksx$aproovitykk_id, res = res)
 plot(ksx$inv_korgus, pk)
@@ -61,7 +62,7 @@ kms18[kms18$aproovitykk_id %in% sidxx,]$kasutan = "jah"
 
 
 kms18$aasta_erinevus = 2018 - kms18$aasta
-pk = predict(km, newdata = kms18) #wtf, kuidas siin 905?
+pk = predict(km1, newdata = kms18) #wtf, kuidas siin 905?
 #res = pk - kms18$inv_korgus
 df18 = data.frame(SID = kms18$aproovitykk_id, pred = pk)
 df18$true = kms18$inv_korgus
@@ -82,3 +83,31 @@ plot(kms18$arv_maht_es,(df18$pred - df18$true))
 #kõrguse prognoosimudelist välja jäetud
 #korgus_valja = c(dres1$SID, dres2$SID[-12],dres3$SID[-7],dres4$SID,dres5$SID[1:2],valja$aproovitykk_id)
 #save(korgus_valja, file = "korgus_valja.RData")
+
+#log teisendus
+load(file = "korgus_valja.RData")
+k1 = koos_mets[!(koos_mets$aproovitykk_id %in% korgus_valja),]
+k1$log_korgus = log(k1$inv_korgus)
+k1$poord_korgus = 1 / k1$inv_korgus
+km_log = lm(log_korgus ~ K_Elev_P90 + H_Elev_P90 + aasta_erinevus, data = k1)
+summary(km_log) #aasta_erinevus negatiivse kordajaga, sest praegu näitaks lidar muidu liiga kõrget metsa. kordaja 3.3, ehk 33cm aastas juurdekasv? palju natuke!
+pk1 = exp(predict(km_log, data = k1))
+res1 = pk1 - k1$inv_korgus
+resdf1 = data.frame(SID = k1$aproovitykk_id, res = res1)
+plot(exp(k1$log_korgus), pk1)
+
+#step
+#log ei tööta, pöörd?
+
+indxNA <- apply(koos[,233:416], 2, function(x) any(is.na(x)))
+names(koos[,233:416])[indxNA]
+vars_Int = names(koos[,233:416])[-grep("Int",names(koos[,233:416]))]
+#lidar_intless = vars_Int[!(vars_Int %in% names(adata)[indxNA])]
+
+
+frm_poord = as.formula(paste("poord_korgus", paste(c(vars_Int, "aasta_erinevus"), collapse = "+"), sep = " ~ "))
+m1_log = lm(frm_poord, k1)
+m_step_log = step(m1_log)
+summary(m_step_log)
+pstep_log = exp(predict(m_step_log, data = k1))
+plot(k1$inv_korgus, pstep_log)

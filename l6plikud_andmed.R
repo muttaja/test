@@ -1,5 +1,6 @@
 #
-setwd("A:/MAKA/d2_13.11.2018_esimene_andmekaust_nimi_korrastamata/naidised/SMI")
+setwd("C:/Users/Mats/Documents/Kool/MAKAT÷÷/loplik_andmestik/naidised/SMI")
+#setwd("C:/Users/Mats/Documents/Kool/MAKAT÷÷/loplik_andmestik/naidised/SMI")
 katvus = read.csv("Kagu-Eesti_15m_katvus.csv")
 korgus = read.csv("Kagu-Eesti_15m_korgus.csv")
 koos = read.csv("SMI_13_17_taks_ALS_SAT_koos.csv")
@@ -98,16 +99,17 @@ require(nlme)
 
 require(lme4)
 
-# start = Sys.time()
-# for(band in bands){
-#   data_band = data[data$band == band,]
-#   mm1 = glmer(value ~ factor(SID) + aa +(1|ylelend), data = data_band, na.action = na.exclude)
-#   data$pred_glmer[data$band == band] = predict(mm1, data_band, level = 0)
-# }
-# end = Sys.time()
-# 
-# end - start
-# #save(data, file = "sat_glmer.RData")
+start = Sys.time()
+for(band in bands){
+  data_band = data[data$band == band,]
+  mm1 = glmer(value ~ factor(SID) + aa +(1|ylelend), data = data_band, na.action = na.exclude)
+  data$pred_glmer[data$band == band] = predict(mm1, data_band, level = 0)
+}
+end = Sys.time()
+
+end - start
+#save(data, file = "sat_glmer.RData")
+
 setwd("A:/MAKA")
 load(file = "sat_glmer.RData")
 
