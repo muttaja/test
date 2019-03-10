@@ -137,7 +137,7 @@ ww$B7_sq = sqrt(ww$B7)
 
 #kas võtta ainult mets?
 ww = ww[ww$aproovitykk_id %in% mets_id,]
-
+require(lme4)
 m2 = lmer(B02 ~ B2 + (1|cat), data = ww, na.action = na.exclude)
 m3 = lmer(B03 ~ B3 + (1|cat), data = ww, na.action = na.exclude)
 m4 = lmer(B04 ~ B4 + (1|cat), data = ww, na.action = na.exclude)
@@ -359,6 +359,13 @@ lnk = koos[koos$aproovitykk_id == 72444,"link"]; browseURL(lnk, browser = getOpt
 #suurimad absoluutsed vead:
 
 data$abs = abs(data$B02 - data$predB02) + abs(data$B03 - data$predB03) + abs(data$B04 - data$predB04) + abs(data$B08 - data$predB08) + abs(data$B11 - data$predB11) + abs(data$B12 - data$predB12)
+data$abs2 = abs(data$B02 - data$predB02)
+data$abs3 = abs(data$B03 - data$predB03)
+data$abs4 = abs(data$B04 - data$predB04)
+data$abs8 = abs(data$B08 - data$predB08)
+data$abs11 = abs(data$B11 - data$predB11)
+data$abs12 = abs(data$B12 - data$predB12)
+
 
 data = data[order(data$abs, decreasing = T),]
 count = 1;
@@ -375,6 +382,22 @@ dints = merge(dints_w, hh4, by = "aproovitykk_id")
 plot(dints$abs, dints$score)
 cor(dints$abs, dints$score, use = "complete.obs")
 
+
+par(mfrow=c(3,2))
+plot(dints$abs2, dints$score)
+plot(dints$abs3, dints$score)
+plot(dints$abs4, dints$score)
+plot(dints$abs8, dints$score)
+plot(dints$abs11, dints$score)
+plot(dints$abs12, dints$score)
+
+
+cor(dints$abs2, dints$score, use = "complete.obs")
+cor(dints$abs3, dints$score, use = "complete.obs")
+cor(dints$abs4, dints$score, use = "complete.obs")
+cor(dints$abs8, dints$score, use = "complete.obs")
+cor(dints$abs11, dints$score, use = "complete.obs")
+cor(dints$abs12, dints$score, use = "complete.obs")
 
 #############################
 
@@ -470,7 +493,6 @@ bands = unique(dcl$band)
 start = Sys.time()
 start
 for(band in bands){
-  band = bands[4]
   print(Sys.time())
   data_band = dcl[dcl$band == band,]
   mm1 = lm(value ~ factor(aproovitykk_id) + factor(aproovitykk_id)*aa + aa, data = data_band, na.action = na.exclude)
@@ -490,7 +512,7 @@ save(dcl, file = "data_xxx.RData")
 #kuidas mudel selle olukorra lahendab?
 
 band = "B12";data_band = dcl[dcl$band == band,]; hist(data_band$value)
-#db5 = data_band
+db5 = data_band
 db5 = db5[order(db5$aproovitykk_id),]
 par(mfrow = c(1,1))
 hist(db5[db5$aa == "kevad1",]$value)

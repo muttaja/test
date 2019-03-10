@@ -358,7 +358,7 @@ aic_knn3 = function(vars){
   #nüüd pole AIC. kas knn korral üldse saab AIC rääkida?
 }
 
-panus3 = function(data, var, n, aic_fun, rn, liik){
+panus3 = function(data, var, n, aic_fun, rn){
   #var: millise tunnuse mõju uurime?
   #n: mitu juhuslikku tunnuste kombinatsiooni võtame, mille korral muutust jälgime?
   difs = c()
@@ -366,11 +366,10 @@ panus3 = function(data, var, n, aic_fun, rn, liik){
     #rn = 3 #võtame 3 tunnust ja paneme ühe juurde
     rvar = sample(vars[!(vars %in% var)], rn) #juhuslikult valitud tunnused
     var1 = c(var,rvar) # ... koos meile huvipakkuva tunnusega
-    #print(var1)
-    dif = aic_fun(rvar, liik) - aic_fun(var1, liik)
+    dif = aic_fun(rvar) - aic_fun(var1)
     difs = c(difs,dif)
   }
-  return(mean(difs))
+  return(mean(difs, na.rm = TRUE)) #kuskil sügavamal probleem puuduvate väärtustega
 }
 
 tulemused = c()
@@ -456,7 +455,7 @@ hist(tulemused)
 #prooviks aint üht puuliiki esmalt, nt mänd?
 
 
-aic_knn4 = function(vars, liik){
+aic_knn4 = function(vars, liik = 1){
   data1 = data[,c(vars,"cl")]
   pred  = fun_agre_test(data1, data_puud)
   pred = pred / rowSums(pred)
@@ -532,8 +531,6 @@ aic_knn4 = function(vars, liik = 1){
   pred  = fun_agre_test(data1, data_puud)
   pred = pred / rowSums(pred)
   true = data_puud_raie / rowSums(data_puud_raie)
-  
-  
   #print(vars)
   #print(pred[,1])
   #print(true[,1])
@@ -542,11 +539,6 @@ aic_knn4 = function(vars, liik = 1){
   rsdls = (pred - true)[,1]#paraku keskmine pole kindlasti 0.
   RSS = sum(rsdls**2)
   RSS
-  if(is.na(RSS)){
-    print(names(data1))
-    print(c("pred", pred))
-    print(c("rowsums", rowSums(pred)))
-  }
 }
 
 
@@ -566,10 +558,10 @@ fun_agre_test = function(data, data_puud)
 
 xx = fun_agre_test(data[,c("SID","B03_sygis1","B12_vahe_kevad","cl")], data_puud)
 
-testfun = function(n, vars, data, rn = 2, liik = 1, aic_fun = aic_knn4){
+testfun = function(n, vars, data){
   test = c()
   for(i in 1:length(vars)){
-    test[i] = panus3(data = data, var = vars[i], n = n, aic_fun, rn, liik)
+    test[i] = panus3(data = data, var = vars[i], n = n, aic_fun = aic_knn4, rn = 2)
     print(cbind(i, test[i]))
   }
   test
@@ -613,309 +605,9 @@ hist(test100_9plus)
 vars[test20 > 9][test100_9plus > 10]
 test500_10plus = testfun(500, vars = vars[test20 > 9][test100_9plus > 10], data = data)
 test500_10plus
-
+hist(test500_10plus)
+plot(sort(test500_10plus), type = "o") 
+vars[test20> 9][test100_9plus > 10][test500_10plus > 11]
 
 #nüüd sama asi proovida esialgse süsteemiga. Ehk kõige levinuma puuliigi ennustuse põhjal
 #ja siis nende põhjal kaugustele kaalud!?
-
-
-
-
-var_valik = c("B06_kevad1","B06_kevad2","B06_sygis2","B07_sygis2","B08_kevad2","B08_sygis1","B08_sygis2","B5_kevad2")
-
-
-data0 = data; data0[,2:252] = scale(data[,2:252]);
-vars0 = vars[70:251]; #"Int" võib julgesti välja võtta
-vars = vars[1:69]
-
-
-aic_knn4 = function(vars, liik){
-  data1 = data[,c("SID", vars,"cl")]
-  pred  = fun_agre_test(data1, data_puud)
-  pred = pred / rowSums(pred)
-  true = data_puud_raie / rowSums(data_puud_raie)
-  rsdls = (pred - true)[,liik]#paraku keskmine pole kindlasti 0.
-  RSS = sum(rsdls**2)
-  if(is.na(RSS)){
-    print(names(data1))
-    print(c("pred", pred))
-  }
-  RSS
-}
-
-#miks "SID"            "B03_sygis2"     "B03_vahe_kevad" "cl"   
-#nt vaatluse 166 NA tagastab?
-
-fun_agre_test = function(data, data_puud)
-{
-  dists = knn.cv(train = data[,2:(dim(data)[2]-1)], cl = data$cl, k = 10)
-  dist1 = attr(dists,"nn.dist")
-  dist1 = dist1 + 1e-10
-  #print(dist1[11:13,])
-  index1 = attr(dists,"nn.index")
-  props = apply(dist1, 1, propcumsum1) #erinevad proportsioonide vektorid võimalikud
-  props = t(props)
-  indxprops = cbind(index1, props)
-  #print(indxprops[11:13,])
-  data_puud = data_puud
-  retr = data.frame(round(t(apply(indxprops, 1, agre)),0))
-  #print(retr[11:13,])
-  #print(dim(data))
-  #print(dim(data_puud))
-  retr
-}
-
-tst1 = fun_agre_test(data = data0[, c("SID", "B07_vahe_kevad","B07_sygis2","cl")], data_puud)
-#probleem tekib selles, et hetkel võib leiduda lähim naaber kaugusega 0!
-#muutsin: dist1 = dist1 + 1e-10
-
-vars_Int = vars0[-grep("Int",vars0)] 
-
-test_lidar10 = testfun(10, vars_Int, data0)
-hist(test_lidar10)
-
-test_lidar50_1.5plus = testfun(50, vars = vars_Int[test_lidar10 > 1.5], data = data0) 
-hist(test_lidar50_1.5plus)
-
-test_lidar150_2plus = testfun(150, vars = vars_Int[test_lidar10 > 1.5][test_lidar50_1.5plus > 2], data = data0) 
-hist(test_lidar150_2plus)
-
-vars_lidar = vars_Int[test_lidar10 > 1.5][test_lidar50_1.5plus > 2][test_lidar150_2plus > 2]
-var_valik = c("B06_kevad1","B06_kevad2","B06_sygis2","B07_sygis2","B08_kevad2","B08_sygis1","B08_sygis2","B5_kevad2")
-
-vars_sat_lid = c(var_valik, vars_lidar)
-
-data00 = data0[,c("SID", vars_sat_lid, "cl")]
-
-#lisame kolmesele komplektile
-#3-kaupa 13-st oleks 286 kombinatsiooni
-test_all_50 = testfun(50, vars_sat_lid, data00, rn = 3)
-hist(test_all_50)
-plot(sort(test_all_50), type = "o")
-#"lidar" ilmselgelt ei anna suurt midagi juurde
-
-test_all_50_rn4 = testfun(50, vars_sat_lid, data00, rn = 4, liik = 1)
-hist(test_all_50_rn4)
-plot(sort(test_all_50_rn4), type = "o")
-
-#kask
-test_all_50_rn4_kask = testfun(50, vars_sat_lid, data00, rn = 4, liik = 3)
-hist(test_all_50_rn4_kask)
-plot(sort(test_all_50_rn4_kask), type = "o")
-
-#algne "max":
-aic_max = function(vars, liik){
-  data1 = data[,c(vars,"cl")]
-  pred  = fun_agre_test(data1, data_puud)
-  true = data_puud_raie / rowSums(data_puud_raie)
-  true_max = apply(true,1,max)
-  indx_max_true = apply(true, 1, which.max)
-  pred_max = pred[cbind(1:nrow(pred), unlist(indx_max_true))] / rowSums(pred)
-  rsdls = pred_max - true_max
-  RSS = sum(rsdls**2)
-  RSS
-}
-
-test_all_50_rn4_max = testfun(50, vars_sat_lid, data00, rn = 4, aic_fun = aic_max, liik = 2) #kuigi liik tegelt suva
-hist(test_all_50_rn4_max)
-plot(sort(test_all_50_rn4_max), type = "o")
-
-#tuleb nullist alustada...
-#
-vars_uus = c(vars, vars_Int)
-data000 = data0[,c("SID", vars_uus, "cl")]
-Sys.time(); t200_all = testfun(200, vars_uus, data000, rn = 4, aic_fun = aic_max, liik = 2); Sys.time()
-#~6h
-hist(t200_all)
-plot(t200_all)
-
-#ei andnud head pilti, rn3?
-t100_rn3 = testfun(100, vars_uus[t200_all > 2.5], data000[,c("SID", vars_uus[t200_all > 2.5], "cl")], rn = 3, aic_fun = aic_max, liik = 2); Sys.time()
-hist(t100_rn3)
-plot(t100_rn3)
-
-t100_rn3_5plus = testfun(100, vars_uus[t200_all > 2.5][t100_rn3 > 5], data000[,c("SID", vars_uus[t200_all > 2.5][t100_rn3 > 5], "cl")], rn = 3, aic_fun = aic_max, liik = 2); Sys.time()
-hist(t100_rn3_5plus)
-plot(t100_rn3_5plus)
-#pigem arvutada ikka iga puuliik eraldi ja korrutada kaaludega läbi üldise RSS arvutamisel
-
-
-aic_weighted = function(vars, liik){
-  data1 = data[,c(vars,"cl")]
-  pred  = fun_agre_test(data1, data_puud)
-  pred = pred  / rowSums(pred)
-  true = data_puud_raie / rowSums(data_puud_raie)
-  w = colSums(true) / dim(data1)[1]
-  rsdls = (pred - true)*w
-  rsdls
-  #RSS = sum(rsdls**2)
-  #RSS
-}
-
-var_test = vars_uus[t200_all > 2.5][t100_rn3 > 5]
-data_test = data0[,c("SID",var_test,"cl")]
-
-test1 = testfun(10, var_test, data_test, rn = 3, aic_fun = aic_weighted, liik = 2)
-hist(test1)
-plot(test1)
-
-test12 = testfun(10, var_test, data_test, rn = 4, aic_fun = aic_weighted, liik = 2)
-hist(test12)
-plot(test12)
-
-par(mfrow = c(1,2))
-plot(test1);plot(test12)
-
-#
-
-fun_vars = function(vars, n, rn){
-  k = 1
-  while(length(vars) > 10){
-  data_vars = data0[,c("SID", vars, "cl")]
-  vars_RSS = testfun(n, vars, data_vars, rn = rn, aic_fun = aic_weighted, liik = 2)
-  nam = paste("vaheseis", k, sep = "_") 
-  assign(nam, cbind(vars, vars_RSS))
-  vars = vars[vars_RSS > quantile(vars_RSS, 0.5)]
-  print(vars)
-  k = k+1
-  }
-  final = cbind(vars, vars_RSS[vars_RSS > quantile(vars_RSS, 0.5)])
-  to_return = list("seis1" = vaheseis_1, "seis2" = vaheseis_2,"seis3" = vaheseis_3, "final" = final)
-  to_return
-}
-
-testfun = function(n, vars, data, rn = 2, liik = 1, aic_fun = aic_knn4){
-  test = c()
-  for(i in 1:length(vars)){
-    test[i] = panus3(data = data, var = vars[i], n = n, aic_fun, rn, liik)
-    print(cbind(i, vars[i], test[i]))
-  }
-  test
-}
-
-rec = fun_vars(vars)
-#sama uuesti:
-rec1 = fun_vars(vars, n)
-
-rec100 = fun_vars(vars)
-#BTW: kknn pakett "kaalub" kaugusi, mh "epanechnikov"
-
-w = as.numeric(rec100[,2])
-w = sqrt(w / 207)
-w = w / sum(w)
-
-tst1 = aic_weighted(vars[1:5],1)
-tst2 = aic_weighted(vars[6:10],1)
-tst2 = aic_weighted(vars[11:15],1)
-
-aic_weighted = function(vars, liik){
-  data1 = data[,c(vars,"cl")]
-  pred  = fun_agre_test(data1, data_puud)
-  pred = pred  / rowSums(pred)
-  true = data_puud_raie / rowSums(data_puud_raie)
-  w = colSums(true) / dim(data1)[1]
-  rsdls = (pred - true)
-  rsdls
-  cols = colSums(rsdls**2)
-  RSS_col = cols*w
-  sum(RSS_col)
-}
-
-tst = fun_vars(vars,10)
-tst10 = tst
-
-Sys.time(); tst50 = fun_vars(vars,50); Sys.time()
-
-hist(as.numeric(tst50$seis1[,2]))
-tst50
-
-Sys.time(); tst50_rn2 = fun_vars(vars,50); Sys.time()
-hist(as.numeric(tst50_rn2$seis1[,2]))
-
-#vaatame, kas lidar annab midagi:
-sat_vars = tst50_rn2$final[,1]
-
-fun_vars1 = function(vars, n){
-  k = 1
-  while(length(vars) > 20){
-    data_vars = data0[,c("SID", sat_vars, vars, "cl")]
-    vars_RSS = testfun(n, vars, data_vars, rn = 2, aic_fun = aic_weighted, liik = 2)
-    nam = paste("vaheseis", k, sep = "_") 
-    assign(nam, cbind(vars, vars_RSS))
-    vars = vars[vars_RSS > quantile(vars_RSS, 0.7)]
-    print(vars)
-    k = k+1
-  }
-  final = cbind(vars, vars_RSS[vars_RSS > quantile(vars_RSS, 0.5)])
-  to_return = list("seis1" = vaheseis_1, "seis2" = vaheseis_2,"seis3" = vaheseis_3, "final" = final)
-}
-
-#vars_Int on ilma intensiivsusteta lidari tunnused
-
-lid_vars =  c("K_Return_4_count","K_Total_all_returns",
-              "H_Return_1_count_above_130","H_Return_2_count_above_130",
-              "H_Return_4_count_above_130","H_Return_9_count_above_130",
-              "H_Elev_maximum","H_Elev_mode","H_Elev_P10","H_Elev_P40",
-              "H_Elev_P80","H_Total_return_count")  #välja nopitud, viimase lisasin manuaalselt
-
-lid_test = testfun(100, lid_vars, 
-                   data0[,c("SID", sat_vars, lid_vars, "cl")],
-                   rn = 2, aic_fun = aic_weighted, liik = 1)
-
-#nii, et testitavad poleks ise var-ide hulgas, mille seast valitakse
-panus4 = function(data, test_var, samp_var, n, aic_fun, rn, liik){
-  #var: millise tunnuse mõju uurime?
-  #n: mitu juhuslikku tunnuste kombinatsiooni võtame, mille korral muutust jälgime?
-  difs = c()
-  for(k in 1:n){
-    #rn = 3 #võtame 3 tunnust ja paneme ühe juurde
-    rvar = sample(samp_var, rn) #juhuslikult valitud tunnused
-    varx = c(test_var,rvar) # ... koos meile huvipakkuva tunnusega
-    #print(var1)
-    dif = aic_fun(rvar, liik) - aic_fun(varx, liik)
-    difs = c(difs,dif)
-  }
-  return(mean(difs))
-}
-
-testfun1 = function(n, test_var, samp_var, data, rn = 2, liik = 1, aic_fun = aic_knn4){
-  test = c()
-  for(i in 1:length(test_var)){
-    #print(i); print(test_var[i])
-    test[i] = panus4(data = data, test_var = test_var[i], samp_var, n = n, aic_fun, rn, liik)
-    print(cbind(i,test_var[i], test[i]))
-  }
-  test
-}
-
-lid_test = testfun1(20, c("B02_kevad1",lid_vars), sat_vars,
-                   data0[,c("SID", sat_vars, lid_vars, "cl")],
-                   rn = 4, aic_fun = aic_weighted)
-#see B02 testiks lhc
-#aga kuidas kõik ikka nii samas augus? midagi valesti? või liiga väha arguemente?
-#rn2 andis pmst kõik ~7
-
-lid_test = testfun1(50, c("B02_kevad1",lid_vars), sat_vars,
-                    data0[,c("SID", sat_vars, lid_vars, "cl")],
-                    rn = 4, aic_fun = aic_weighted)
-#aiateibad
-
-Sys.time(); sat_test50_rn5 = fun_vars(vars,50, rn = 5); Sys.time()
-hist(as.numeric(sat_test50_rn5$seis1[,2]))
-sat_test50_rn5$final
-
-Sys.time(); sat_test250_rn5 = fun_vars(vars,250, rn = 5); Sys.time()
-sat_test250_rn5$final
-hist(as.numeric(sat_test50_rn5$seis1[,2]));hist(as.numeric(sat_test250_rn5$seis1[,2]))
-
-
-Sys.time(); sat50_rn4_UUS = fun_vars(vars, 50, rn = 5); Sys.time()
-
-test100a = testfun1(100, test_var = vars, samp_var = vars, data = data0[,c("SID", vars, "cl")], rn = 4, liik = 1, aic_fun = aic_weighted)
-par(mfrow = c(1,1)); hist(test100a)
-vars[test100a > 1]; test100a[test100a > 1]
-test200 = testfun1(200, test_var = vars[test100a > 1], samp_var = vars[test100a > 1], data = data0[,c("SID", vars, "cl")], rn = 4, liik = 1, aic_fun = aic_weighted)
-hist(test200)
-
-vars[test100a > 1][test200 > 0]; test200[test200 > 0]
-plot(sort(test200), type = "o")
