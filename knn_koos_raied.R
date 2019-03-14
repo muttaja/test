@@ -333,8 +333,24 @@ fun_liik0 = function(liigid, k1, k2){
 #MAKUKS1 = fun_liik0(liigid = c(1:4), k1 = 1, k2 = 20)
 #save(MAKUKS1, file = "MAKUKS.RData")
 
+for(l in 1:4){
+  rss= c()
+  for(k in 1:20){
+    rss[k] = nr_neigh_liik(k, vars = MAKUKS1[[l]][[k]], liik = l)
+  }
+  assign(paste("rss_MAKUKS", l, sep="_"),rss)
+}
+
+par(mfrow=c(2,2))
+plot(rss_MAKUKS_1, type = "o")
+plot(rss_MAKUKS_2, type = "o")
+plot(rss_MAKUKS_3, type = "o")
+plot(rss_MAKUKS_4, type = "o")
+
+#teeme 10 ... 20
+
 j1 = 1; j2 = 4;
-k1 = 1; k2 = 20;
+k1 = 10; k2 = 20;
 wlist   = vector("list", length = j2 - j1 +1)
 rsslist = vector("list", length = j2 - j1 +1)
 for(j in j1:j2){
@@ -347,11 +363,100 @@ for(j in j1:j2){
     opti_liik1 = optim(par = w, fn = fun_opti_liik, k = k, vars = varsx, liik = j)
     print(j);print(k);print(opti_liik1$value)
 
-    lst_return1[[k]] =  assign(paste("rss", j, k, sep="_"),opti_liik1$value)
-    lst_return2[[k]] =  assign(paste("weights", j, k, sep="_"),opti_liik1$par)
+    lst_return1[[k-k1+1]] =  assign(paste("rss", j, k, sep="_"),opti_liik1$value)
+    lst_return2[[k-k1+1]] =  assign(paste("weights", j, k, sep="_"),opti_liik1$par)
   }
-  wlist[[j]] = lst_return1
-  rsslist[[j]] = lst_return2
+  rsslist[[j]] = lst_return1
+  wlist[[j]] = lst_return2
 }
+
+#save(rsslist, file = "weights601.RData")
+
+#sai vähe valesti, aga sisu on õige
+par(mfrow = c(2,2))
+plot(unlist(wlist[[1]][10:20]), type = "o")
+plot(unlist(wlist[[2]][10:20]), type = "o")
+plot(unlist(wlist[[3]][10:20]), type = "o")
+plot(unlist(wlist[[4]][10:20]), type = "o")
+
+#kui võtta kõigil sama arv naabreid (13):
+optix = function(varlist, j1, j2, k1, k2, method = "BFGS"){
+  #j1 = 1; j2 = 4;
+  #k1 = 10; k2 = 20;
+  wlist   = vector("list", length = j2 - j1 +1)
+  rsslist = vector("list", length = j2 - j1 +1)
+  for(j in j1:j2){
+    lst_return1 = vector("list", length = k2 - k1 +1)
+    lst_return2 = vector("list", length = k2 - k1 +1)
+    for(k in k1:k2){
+      print(c(j,k)); print(Sys.time())
+      varsx =  varlist[[j]][[k]]
+      w = rep(1, length(varsx))
+      opti_liik1 = optim(par = w, fn = fun_opti_liik, k = k, vars = varsx, liik = j, method = method)
+      print(j);print(k);print(opti_liik1$value)
+    
+      lst_return1[[k-k1+1]] =  assign(paste("rss", j, k, sep="_"),opti_liik1$value)
+      lst_return2[[k-k1+1]] =  assign(paste("weights", j, k, sep="_"),opti_liik1$par)
+    }
+    rsslist[[j]] = lst_return1
+    wlist[[j]] = lst_return2
+  }
+  return(cbind(rsslist, wlist))
+}
+
+t1 = Sys.time()
+ooseks1 = optix(MAKUKS1,1,4,13,13, method = "BFGS")
+t2 = Sys.time(); print(t2 - t1)
+ooseks2 = optix(MAKUKS1,1,4,10,20, method = "BFGS")
+t3 = Sys.time(); print(t3 - t1)
+
+par(mfrow = c(2,2))
+plot(unlist(ooseks2[[1]][1:11]), type = "o")
+plot(unlist(ooseks2[[2]][1:11]), type = "o")
+plot(unlist(ooseks2[[3]][1:11]), type = "o")
+plot(unlist(ooseks2[[4]][1:11]), type = "o")
+
+for(i in 1:4){
+  liik = i
+  k = 13
+  wws = unlist(ooseks1[[i+4]])
+  vars =  MAKUKS1[[liik]][[k]]
+  dex = data10[,c("SID",vars)]
+  dex = dex[dex$SID %in% sidxx,]
+  dex[,-1] = t((t(as.matrix(dex[,-1])))*wws)#*bw - ta
+  dex$cl = "cl"
+  H_puu = fun_agre_liik(dex, data_puud, k = k, liik = liik)
+  HPM = data.frame(H = H_puu, T = data_puud_raie_props[,liik])
+  assign(paste("KSM", i,k, sep=""),HPM)
+}
+
+KSM4 = data.frame(MA = KSM14$H, KU = KSM24$H, KS = KSM34$H, HB = KSM44$H, LM = KSM54$H, LV = KSM64$H, KX = KSM74$H)
+KSM5 = data.frame(MA = KSM15$H, KU = KSM25$H, KS = KSM35$H, HB = KSM45$H, LM = KSM55$H, LV = KSM65$H, KX = KSM75$H)
+KSM6 = data.frame(MA = KSM16$H, KU = KSM26$H, KS = KSM36$H, HB = KSM46$H, LM = KSM56$H, LV = KSM66$H, KX = KSM76$H)
+k4 = WRSS(KSM4); k4 #4.239147
+k5 = WRSS(KSM5); k5 #4.722356
+k6 = WRSS(KSM6); k6 #3.962853
+fun_rss(cbind(KSM6, data_puud_raie_props)) #0.07487348
+
+par(mfrow = c(2,2))
+plot(KSM113$T, KSM113$H, xlim = c(0,1), ylim = c(0,1), ylab = "prognoos", xlab = "mänd")
+plot(KSM213$T, KSM213$H, xlim = c(0,1), ylim = c(0,1), ylab = "prognoos", xlab = "kuusk")
+plot(KSM313$T, KSM313$H, xlim = c(0,1), ylim = c(0,1), ylab = "prognoos", xlab = "kask")
+plot(KSM413$T, KSM413$H, xlim = c(0,1), ylim = c(0,1), ylab = "prognoos", xlab = "muu")
+
+MKKM = data.frame(MA = KSM113$H, KU = KSM213$H, KS = KSM313$H, MUU = KSM413$H)
+hist(rowSums(MKKM))
+MKKM = MKKM / rowSums(MKKM)
+plot(KSM113$T, MKKM$MA, xlim = c(0,1), ylim = c(0,1), ylab = "prognoos", xlab = "mänd")
+plot(KSM213$T, MKKM$KU, xlim = c(0,1), ylim = c(0,1), ylab = "prognoos", xlab = "kuusk")
+plot(KSM313$T, MKKM$KS, xlim = c(0,1), ylim = c(0,1), ylab = "prognoos", xlab = "kask")
+plot(KSM413$T, MKKM$MUU, xlim = c(0,1), ylim = c(0,1), ylab = "prognoos", xlab = "muu")
+
+(colSums((MKKM - data_puud_raie_props)**2))/601
+#0.02993993 0.02730729 0.03993158 0.02454979
+ooseks1[[1]];ooseks1[[2]];ooseks1[[3]];ooseks1[[4]];
+#0.02958518 0.02824789 0.04434677 0.02428031
+
+##ainult tüvemaht üle 100 ???
 
 

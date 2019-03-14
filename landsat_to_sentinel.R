@@ -559,5 +559,6 @@ vahed_kevad = data.frame(dk[,nk2] - dk[,nk1])
 names(vahed_kevad) = nkv
 
 dk = cbind(dk, vahed_kevad)
+save(dk, file = "lnds_to_sent.RData")
 
 
