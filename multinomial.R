@@ -9,6 +9,7 @@
 #load("ID_OK.RData", verbose = T)# 174
 
 setwd("A:/MAKA/TEST/test")
+setwd("C:/Users/Mats/Documents/Kool/MAKAT÷÷/TEST/test")
 load("sid601.RData")
 load("mets_id.RData")
 
@@ -72,7 +73,8 @@ table(dkm50$cl50) #136   89   67  224
 
 dp00 = taks_uus[, puud]; dp00 = dp00 / rowSums(dp00)
 ddd = cbind(dkm0, dp00)
-write.csv(ddd, file = "d601.csv")
+#write.csv(ddd, file = "d601.csv")
+ddd = read.csv("d601.csv")
 
 
 
@@ -111,7 +113,9 @@ formula1 = as.formula(paste("cl", paste(namesz, collapse=" + "), sep=" ~ "))
 m1 = multinom(formula1, dkm50_, weights = weight)
 m1
 summary(m1)
-require(car);require(lmtest); require(MASS)
+require(car)
+require(lmtest)
+require(MASS)
 Anova(m1)
 m2 = stepAIC(multinom(formula1, dkm50_)) #, weights = weight
 Anova(m2)

@@ -1,0 +1,41 @@
+#20.11.18
+
+setwd("C:/Users/Mats/Documents/Kool/MAKATÖÖ/loplik_andmestik/naidised/SMI")
+katvus = read.csv("Kagu-Eesti_15m_katvus.csv")
+korgus = read.csv("Kagu-Eesti_15m_korgus.csv")
+koos = read.csv("SMI_13_17_taks_ALS_SAT_koos.csv")
+sat = read.csv("smi_prt_13_17_pixphv-heledused.csv")
+
+katvus1 = head(katvus)
+korgus1 = head(korgus)
+koos1 = head(koos)
+sat1 = head(sat)
+
+#LGN?
+
+satnames = names(sat)
+LGN = grep("LGN00", satnames)
+satnames[LGN]
+
+
+#kuupäevad 2017:
+require(tidyr)
+require(stringr)
+satnames = names(sat); satnames[2] = "SID"; names(sat) = satnames;
+band = str_sub(satnames[-(1:3)],-3,-1)
+satel = str_sub(satnames[-(1:3)],1,2)
+dates = as.Date(gsub("_","",str_sub(satnames[-(1:3)],-12,-4)), format="%Y%m%d")
+
+sat_long = sat  %>% gather(xxx, value, -SID,-cat)
+sat_sep = separate(sat_long, xxx, c("satel","ylelend","kp","band"), sep = "_")
+#satelliit, lennu trajektoor, kuupäev, kanal/lainepikkus
+
+sat_sep$date = as.Date(sat_sep$kp, format="%Y%m%d")
+
+table(format(sat_sep$date,"%Y"))
+sat18 = sat_sep[format(sat_sep$date,"%Y") == "2018",]   
+sat17 = sat_sep[format(sat_sep$date,"%Y") == "2017",]   
+dates = names(table(sat18$date))
+dates
+
+

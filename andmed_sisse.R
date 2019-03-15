@@ -1,5 +1,5 @@
 #adnmed sisse;
-setwd("A:/MAKA/kagu.andmenaidis")
+#setwd("A:/MAKA/kagu.andmenaidis")
 
 sat = read.csv("Kagu-Eesti_SMI_prt_pix.csv.sort")
 #sat1 = subset(sat, select = -c(label,prtk))
@@ -60,7 +60,7 @@ sat_sep$aaeg[substr(sat_sep$kp,6,6) < 7] = "kevad";sat_sep$aaeg[substr(sat_sep$k
 
 
 ##********************************
-setwd("A:/MAKA/smi_prt")
+#setwd("A:/MAKA/smi_prt")
 
 koosseis = read.csv("smi_koosseis.csv", stringsAsFactors = F)
 prt = read.csv("smi_prt.csv")

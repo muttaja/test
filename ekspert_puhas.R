@@ -33,13 +33,23 @@ agre <- function(arg){
 #sidxx vaja
 load(file = "SID_OK.RData")
 puud = c("ARV_VMA", "ARV_VKU", "ARV_VKS", "ARV_VHB", "ARV_VLM", "ARV_VLV", "ARV_VKX")
+
+
 names_taks = names(koos)[c(2,19,25:31)]
-taks_uus = koos[koos$SID %in% sidxx ,names_taks]
+taks_uus = koos[sidxx,names_taks]
+taks_uus = na.omit(taks_uus)
+taks_uus$ARV_VMA = taks_uus$arv_maht_es*taks_uus$MA / 100
+taks_uus$ARV_VKU = taks_uus$arv_maht_es*taks_uus$KU / 100
+taks_uus$ARV_VKS = taks_uus$arv_maht_es*taks_uus$KS / 100
+taks_uus$ARV_VHB = taks_uus$arv_maht_es*taks_uus$HB / 100
+taks_uus$ARV_VLM = taks_uus$arv_maht_es*taks_uus$LM / 100
+taks_uus$ARV_VLV = taks_uus$arv_maht_es*taks_uus$LV / 100
+taks_uus$ARV_VKX = taks_uus$arv_maht_es*taks_uus$KX / 100
 data_puud = taks_uus[, puud]
 data_puud_raie_props = data_puud / rowSums(data_puud)
 
 
-H_eks1 = fun_agre_epa(dex, data_puud); H1 = H_eks1 / rowSums(H_eks1)
+H_eks1 = fun_agre_epa(dex, data_puud, k = 6); H1 = H_eks1 / rowSums(H_eks1)
 data_puud_raie_props = data_puud / rowSums(data_puud)
 
 EH1 = data.frame(cbind(sidxx, H1, data_puud_raie_props))

@@ -1,6 +1,6 @@
 #andmete sisselugemine
-#
-setwd("A:/MAKA/d2_13.11.2018_esimene_andmekaust_nimi_korrastamata/naidised/SMI")
+setwd( "C:/Users/Mats/Documents/Kool/MAKATÖÖ/loplik_andmestik/naidised/SMI")
+#setwd("A:/MAKA/d2_13.11.2018_esimene_andmekaust_nimi_korrastamata/naidised/SMI")
 katvus = read.csv("Kagu-Eesti_15m_katvus.csv")
 korgus = read.csv("Kagu-Eesti_15m_korgus.csv")
 sat = read.csv("smi_prt_13_17_pixphv-heledused.csv")
@@ -66,35 +66,35 @@ sat18$aa = ifelse(sat18$kp %in% kpd[1:2], "kevad1",
 
 #mudel silumiseks ja puuduvate väärtuste kõrvaldamiseks:
 
-# require(lme4)
-# data1 = sat18
-# bands = unique(data$band) #hetkel B2 ja B02 jne erinevate kanalitena. mõõdavad sama asja, aga skaalad erinevad
-# 
-# start = Sys.time()
-# start
-# for(band in bands){
-#   print(Sys.time())
-#   data_band = data1[data1$band == band,]
-#   mm1 = glmer(value ~ factor(aproovitykk_id)+ factor(aproovitykk_id)*aa + aa + (1|ylelend), data = data_band, na.action = na.exclude)
-#   #ülelennul juhuslik mõju: erinevatel trajektooridel lennates jäävad pildid erinevad
-#   data1$pred_glmer[data1$band == band] = predict(mm1, data_band, re.form = NA)
-# }
-# end = Sys.time()
-# end
-# end - start
+require(lme4)
+#data1 = sat18
+bands = unique(data$band) #hetkel B2 ja B02 jne erinevate kanalitena. mõõdavad sama asja, aga skaalad erinevad
+
+start = Sys.time()
+start
+for(band in bands){
+  print(Sys.time())
+  data_band = data1[data1$band == bands[1],]
+  mm1 = glmer(value ~ factor(aproovitykk_id) + aa +(1|ylelend), data = data_band, na.action = na.exclude)
+  #ülelennul juhuslik mõju: erinevatel trajektooridel lennates jäävad pildid erinevad
+  data1$pred_glmer[data1$band == band] = predict(mm1, asd, re.form = NA)
+}
+end = Sys.time()
+end
+end - start
 
 
-#Time difference of 14.01975 hours
-#save(data1, file = "data_glmer2.RData")
+#Time difference of 1.803989 hours
+#save(data1, file = "data_glmer1.RData")
 
 #võtab mõned tunnid aega, seetõttu panin tulemused kirjale kaasa:
-#setwd("A:/MAKA/d2_13.11.2018_esimene_andmekaust_nimi_korrastamata/naidised/SMI")
-load(file = "data_glmer2.RData")
+setwd("A:/MAKA/d2_13.11.2018_esimene_andmekaust_nimi_korrastamata/naidised/SMI")
+load(file = "data_glmer.RData")
 
 #tagasi laia formaati:
 require(reshape2)
 require(dplyr)
-data = data1
+#data = data1
 sat18_wide = data %>% group_by(aproovitykk_id, band, aa) %>% sample_n(1) %>%
   dcast(aproovitykk_id ~ band + aa , value.var="pred_glmer")
 
@@ -134,12 +134,6 @@ raied50 = raied[raied$arv_maht_es > 50,]
 #kui tahta maa-ametist vaadata, avab brauseris:
 count = 0
 count=count +1;print(raied50$aproovitykk_id[count]);browseURL(raied50$link[count], browser = getOption("browser"),encodeIfNeeded = FALSE)
-
-
-nlidar = names(koos)[c(2,233:331, 334:416)]
-lidar = koos[,nlidar]
-sat18_lidar = merge(sat18_wide, lidar, by = "aproovitykk_id", all = T)
-sat18_lidar = na.omit(sat18_lidar) #966 vaatlust
 
 
 
