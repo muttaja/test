@@ -417,3 +417,41 @@ blidall1 = testfun(n = 100, test_var = ballv1, samp_var = ballv1,
 
 blitz = ballv1[blidall1 > 0.1]
 blitzwsq = sqrt(blidall1[blidall1 > 0.1]) / sum(sqrt(blidall1[blidall1 > 0.1])) * 6
+
+
+########################## 25.01 pärast vigade kõrvaldamist andmestikust #####################
+
+cdata = data10; cdata$cl = "cl"
+
+c0 = testfun(n = 50, test_var = vars_sat, samp_var = vars_sat,
+             data = cdata, rn = 5, liik = 1, aic_fun = aic_weighted)
+hist(c0)
+plot(sort(c0[c0 > 0.27]), type = "o")
+
+cvar1=vars_sat[c0 > 0.27]
+
+c1 = testfun(n = 200, test_var = cvar1, samp_var = cvar1,
+             data = cdata, rn = 5, liik = 1, aic_fun = aic_weighted)
+
+hist(c1)
+plot(sort(c1), type = "o")
+
+cvar2=cvar1[c1 > 0.2]
+
+#nüüd kõigi kombodega
+c2 = testfun(n = 200, test_var = cvar2, samp_var = cvar2,
+             data = cdata, rn = 5, liik = 1, aic_fun = aic_weighted)
+
+cexp = cvar2
+wexp = c2
+
+lid_uus = testfun(n = 200, test_var = lidar_intless, samp_var = cvar2,
+                  data = cdata, rn = 12, liik = 1, aic_fun = aic_weighted)
+which.max(lid_uus)
+
+lid_uus2 = testfun(n = 200, test_var = lidar_intless[-84][-100], samp_var = c(cvar2,lidar_intless[84],lidar_intless[-84][100]),
+                  data = cdata, rn = 14, liik = 1, aic_fun = aic_weighted)
+which.max(lid_uus2); max(lid_uus2)
+
+cexp_lid = c(cvar2,lidar_intless[84],lidar_intless[-84][100])
+
