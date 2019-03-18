@@ -108,9 +108,11 @@ require(nnet)
 
 namesz = names(dkm1)[c(2:37,51)]
 namesz[37] = "factor(muld)"
+namesz = namesz[-37] #testiks!
 
 formula1 = as.formula(paste("cl", paste(namesz, collapse=" + "), sep=" ~ "))
-m1 = multinom(formula1, dkm50_, weights = weight)
+m1 = step(multinom(formula1, dkm50_, weights = weight,maxit = 1000))
+m1
 m1
 summary(m1)
 require(car)
