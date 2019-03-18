@@ -66,6 +66,7 @@ sat18$aa = ifelse(sat18$kp %in% kpd[1:2], "kevad1",
 
 #mudel silumiseks ja puuduvate v‰‰rtuste kırvaldamiseks:
 
+<<<<<<< HEAD
 require(lme4)
 #data1 = sat18
 bands = unique(data$band) #hetkel B2 ja B02 jne erinevate kanalitena. mııdavad sama asja, aga skaalad erinevad
@@ -86,10 +87,32 @@ end - start
 
 #Time difference of 1.803989 hours
 #save(data1, file = "data_glmer1.RData")
+=======
+# require(lme4)
+# data1 = sat18
+# bands = unique(data$band) #hetkel B2 ja B02 jne erinevate kanalitena. mııdavad sama asja, aga skaalad erinevad
+# 
+# start = Sys.time()
+# start
+# for(band in bands){
+#   print(Sys.time())
+#   data_band = data1[data1$band == band,]
+#   mm1 = glmer(value ~ factor(aproovitykk_id)+ factor(aproovitykk_id)*aa + aa + (1|ylelend), data = data_band, na.action = na.exclude)
+#   #¸lelennul juhuslik mıju: erinevatel trajektooridel lennates j‰‰vad pildid erinevad
+#   data1$pred_glmer[data1$band == band] = predict(mm1, data_band, re.form = NA)
+# }
+# end = Sys.time()
+# end
+# end - start
+
+
+#Time difference of 14.01975 hours
+#save(data1, file = "data_glmer2.RData")
+>>>>>>> 1e56408bc3c96cc1e2c08f4b2094ca9d18589505
 
 #vıtab mıned tunnid aega, seetıttu panin tulemused kirjale kaasa:
-setwd("A:/MAKA/d2_13.11.2018_esimene_andmekaust_nimi_korrastamata/naidised/SMI")
-load(file = "data_glmer.RData")
+#setwd("A:/MAKA/d2_13.11.2018_esimene_andmekaust_nimi_korrastamata/naidised/SMI")
+load(file = "data_glmer2.RData")
 
 #tagasi laia formaati:
 require(reshape2)
@@ -134,6 +157,12 @@ raied50 = raied[raied$arv_maht_es > 50,]
 #kui tahta maa-ametist vaadata, avab brauseris:
 count = 0
 count=count +1;print(raied50$aproovitykk_id[count]);browseURL(raied50$link[count], browser = getOption("browser"),encodeIfNeeded = FALSE)
+
+
+nlidar = names(koos)[c(2,233:331, 334:416)]
+lidar = koos[,nlidar]
+sat18_lidar = merge(sat18_wide, lidar, by = "aproovitykk_id", all = T)
+sat18_lidar = na.omit(sat18_lidar) #966 vaatlust
 
 
 
