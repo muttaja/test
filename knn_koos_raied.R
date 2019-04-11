@@ -452,11 +452,43 @@ plot(KSM213$T, MKKM$KU, xlim = c(0,1), ylim = c(0,1), ylab = "prognoos", xlab = 
 plot(KSM313$T, MKKM$KS, xlim = c(0,1), ylim = c(0,1), ylab = "prognoos", xlab = "kask")
 plot(KSM413$T, MKKM$MUU, xlim = c(0,1), ylim = c(0,1), ylab = "prognoos", xlab = "muu")
 
-(colSums((MKKM - data_puud_raie_props)**2))/601
+sqrt((colSums((MKKM - data_puud_raie_props)**2))/601)
 #0.02993993 0.02730729 0.03993158 0.02454979
 ooseks1[[1]];ooseks1[[2]];ooseks1[[3]];ooseks1[[4]];
 #0.02958518 0.02824789 0.04434677 0.02428031
 
+#kui aga võtta ainult parim naabrite arv, siis: 13, 20, 10, 13
+ks = c(13,20,10,13)
+for(i in 1:4){
+  liik = i
+  #i = 1
+  k = ks[i]
+  wws = unlist(ooseks2[[i+4]][[k-9]])
+  vars =  MAKUKS1[[liik]][[k]]
+  dex = data10[,c("SID",vars)]
+  dex = dex[dex$SID %in% sidxx,]
+  dex[,-1] = t((t(as.matrix(dex[,-1])))*wws)#*bw - ta
+  dex$cl = "cl"
+  H_puu = fun_agre_liik(dex, data_puud, k = k, liik = liik)
+  HPM = data.frame(H = H_puu, T = data_puud_raie_props[,liik])
+  assign(paste("KNN", i,k, sep="_"),HPM)
+}
+
+
+plot(KNN_1_13$T, KNN_1_13$H, xlim = c(0,1), ylim = c(0,1), ylab = "prognoos", xlab = "mänd")
+plot(KNN_2_20$T, KNN_2_20$H, xlim = c(0,1), ylim = c(0,1), ylab = "prognoos", xlab = "kuusk")
+plot(KNN_3_10$T, KNN_3_10$H, xlim = c(0,1), ylim = c(0,1), ylab = "prognoos", xlab = "kask")
+plot(KNN_4_13$T, KNN_4_13$H, xlim = c(0,1), ylim = c(0,1), ylab = "prognoos", xlab = "muu")
+
+MKKM1 = data.frame(MA = KNN_1_13$H, KU = KNN_2_20$H, KS = KNN_3_10$H, MUU = KNN_4_13$H)
+MKKM1 = MKKM1 / rowSums(MKKM1)
+
+plot(KNN_1_13$T, MKKM1$MA, xlim = c(0,1), ylim = c(0,1), ylab = "prognoos", xlab = "mänd")
+plot(KNN_2_20$T, MKKM1$KU, xlim = c(0,1), ylim = c(0,1), ylab = "prognoos", xlab = "kuusk")
+plot(KNN_3_10$T, MKKM1$KS, xlim = c(0,1), ylim = c(0,1), ylab = "prognoos", xlab = "kask")
+plot(KNN_4_13$T, MKKM1$MUU, xlim = c(0,1), ylim = c(0,1), ylab = "prognoos", xlab = "muu")
+
+sqrt((colSums((MKKM1 - data_puud_raie_props)**2))/601)
 ##ainult tüvemaht üle 100 ???
 
 

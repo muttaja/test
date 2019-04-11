@@ -403,36 +403,141 @@ model0 = stepAIC(multinom(formula1, dkm1, weights = weight), direction = "forwar
 model0
 Anova(model0)
 
-####CART pythonist
-setwd("A:/MAKA/TEST")
-cart = read.csv("cart.csv")
-cart_muld = read.csv("cart_muld.csv")
+###### multinomial 506  / 455 ###########################
 
-#NB see on ilma mullata!
+setwd("A:/MAKA/TEST/test")
+load("taks_info.RData")
+load("sid506.RData")
+d506.100 = read.csv("d506_100.csv")
+data = d506.100
+vars = names(data)[3:49]
 
-par(mfrow = c(2,4))
-plot(dp00[,1],cart[,1])
-plot(dp00[,2],cart[,2])
-plot(dp00[,3],cart[,3])
-plot(dp00[,4],cart[,4])
+#seda alljärgnevat jama pole vaja!
 
-plot(dp00[,1],cart_muld[,1])
-plot(dp00[,2],cart_muld[,2])
-plot(dp00[,3],cart_muld[,3])
-plot(dp00[,4],cart_muld[,4])
+# #klassid, kui võtta piiriks 80%
+# 
+# koos$cl80 = "cl80";
+# koos$cl70 = "cl70";
+# koos$cl50 = "cl50";
+# koos$KX1 = koos$HB + koos$LV + koos$LM + koos$KX
+# require(dplyr)
+# koos = koos %>% mutate(weight = pmax(MA,KU, KS, KX1))
+# koos = koos[!(is.na(koos$MA)),]
+# 
+# koos$cl80 = "cl80"
+# koos[koos$MA >= 80,]$cl80 = "MA"
+# koos[koos$KU >= 80,]$cl80 = "KU"
+# koos[koos$KS >= 80,]$cl80 = "KS"
+# koos[koos$KX1 >= 80,]$cl80 = "KX1"
+# 
+# koos$cl70 = "cl70"
+# koos[koos$MA >= 70,]$cl70 = "MA"
+# koos[koos$KU >= 70,]$cl70 = "KU"
+# koos[koos$KS >= 70,]$cl70 = "KS"
+# koos[koos$KX1 >= 70,]$cl70 = "KX1"
+# 
+# koos$cl50 = "cl50"
+# koos[koos$MA > 50,]$cl50 = "MA"
+# koos[koos$KU > 50,]$cl50 = "KU"
+# koos[koos$KS > 50,]$cl50 = "KS"
+# koos[koos$KX1 > 50,]$cl50 = "KX1"
+# 
+# 
+# #dkm0 = dkm;
+# dkm80 = merge(d506.100,koos[,c("aproovitykk_id", "cl80", "muld")], by = "aproovitykk_id", all.x = T)
+# dkm70 = merge(d506.100,koos[,c("aproovitykk_id", "cl70", "muld")], by = "aproovitykk_id", all.x = T)
+# dkm50 = merge(d506.100,koos[,c("aproovitykk_id", "cl50", "muld")], by = "aproovitykk_id", all.x = T)
+# 
+# dkm = merge(d506.100,koos[,c("aproovitykk_id", "cl50", "cl70","cl80", "weight", "muld")], by = "aproovitykk_id", all.x = T)
+# dkm1 = na.omit(dkm)
+
+data$cl80 = "cl80";data$cl70 = "cl70";data$cl50 = "cl50";
+
+
+data[data$ARV_VMA >= .8,]$cl80 = "MA"
+data[data$ARV_VKU >= .8,]$cl80 = "KU"
+data[data$ARV_VKS >= .8,]$cl80 = "KS"
+data[data$ARV_VXX >= .8,]$cl80 = "KX"
+
+data[data$ARV_VMA >= .7,]$cl70 = "MA"
+data[data$ARV_VKU >= .7,]$cl70 = "KU"
+data[data$ARV_VKS >= .7,]$cl70 = "KS"
+data[data$ARV_VXX >= .7,]$cl70 = "KX"
+
+data[data$ARV_VMA >= .5,]$cl50 = "MA"
+data[data$ARV_VKU >= .5,]$cl50 = "KU"
+data[data$ARV_VKS >= .5,]$cl50 = "KS"
+data[data$ARV_VXX >= .5,]$cl50 = "KX"
 
 
 
-sqrt(mean((dp00[,1] - cart[,1])**2))
-sqrt(mean((dp00[,2] - cart[,2])**2))
-sqrt(mean((dp00[,3] - cart[,3])**2))
-sqrt(mean((dp00[,4] - cart[,4])**2))
 
-sqrt(mean((dp00[,1] - cart_muld[,1])**2))
-sqrt(mean((dp00[,2] - cart_muld[,2])**2))
-sqrt(mean((dp00[,3] - cart_muld[,3])**2))
-sqrt(mean((dp00[,4] - cart_muld[,4])**2))
+#################### GAM-iga ##################???
+d70 = data[data$cl70 != "cl70",]
+d80 = data[data$cl80 != "cl80",]
 
-#võiks proovida ja standardiseerimata andmetel?
-#pca-ga?
+#dlogit = mlogit.data(d70, choice = "cl70", alt.levels = c("MA", "KU", "KS", "KX1"))
+#require(mlogit)#äkki selle paketiga töötab logit ja step koos?
+
+require(nnet)
+
+namesz = names(d70)[c(5:40)] #3. on muld
+namesz[1] = "factor(muld)"
+formula1 = as.formula(paste("cl70", paste(namesz, collapse=" + "), sep=" ~ "))
+ft = as.formula(paste("cl70", paste(namesz[1:10], collapse=" + "), sep=" ~ "))
+
+m1 = step(multinom(formula1, d70, weights = weight, maxit = 1000))
+m2 = stepAIC(multinom(ft, d70, maxit = 1000), direction = "backward")
+
+d_70 = data[data$cl70 == "cl70",]
+d_80 = data[data$cl80 == "cl80",]
+
+
+tst = data.frame(predict(m2, newdata = d_70, type = "probs"))
+tst$aproovitykk_id = d_70$aproovitykk_id
+dp = merge(tst, taks.info, by = "aproovitykk_id", all.x = T)
+dev.off()
+par(mfrow = c(2,2))
+plot(dp[,11],dp[,5], xlab = "Mänd", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,12],dp[,3], xlab = "Kuusk", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,13],dp[,2], xlab = "Kask", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,14],dp[,4], xlab = "Muu", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+
+
+#mingit liiki bagging; valime juhuslikud tunnused!
+#HETKEL ILMA MULLATA!
+var.mult = names(d70)[c(5:38)] #3. on muld
+#var.mult[1] = "factor(muld)"
+ssize = 10
+var.mult.sample = sample(var.mult,ssize)
+
+
+pred = matrix(0,nrow = dim(d_80)[1], ncol = 4)
+N = 2500; ssize = 3
+for(i in 1:N){
+  var.mult.sample = sample(var.mult,ssize)
+  formula = as.formula(paste("cl70", paste(var.mult.sample, collapse=" + "), sep=" ~ "))
+  m = stepAIC(multinom(formula, d80, maxit = 500), direction = "backward")
+  #m = multinom(formula, d80, maxit = 100) #võtsin maxit 1000 pealt 100 peale
+  pred0 = predict(m, newdata = d_80, type = "probs")
+  pred = pred0 + pred
+}
+
+pred = pred/N 
+tst = round(pred,3)
+
+predx = data.frame(pred);predx = predx[,c("MA","KU","KS","KX")]
+predx$aproovitykk_id = d_80$aproovitykk_id
+
+dp = merge(predx, taks.info, by = "aproovitykk_id", all.x = T)
+dev.off()
+par(mfrow = c(2,2))
+plot(dp[,11],dp[,2], xlab = "Mänd", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,12],dp[,3], xlab = "Kuusk", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,13],dp[,4], xlab = "Kask", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,14],dp[,5], xlab = "Muu", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+
+sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4) 
+#ssize = 3; N = 500: #0.2063837; N = 2500: 0.2065031
+#sama ilma kaaludeta: 0.2075632; 0.2056211
 
