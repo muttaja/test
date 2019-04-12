@@ -480,6 +480,7 @@ d80 = data[data$cl80 != "cl80",]
 #require(mlogit)#äkki selle paketiga töötab logit ja step koos?
 
 require(nnet)
+require(MASS)
 
 namesz = names(d70)[c(5:40)] #3. on muld
 namesz[1] = "factor(muld)"
@@ -506,18 +507,18 @@ plot(dp[,14],dp[,4], xlab = "Muu", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), 
 
 #mingit liiki bagging; valime juhuslikud tunnused!
 #HETKEL ILMA MULLATA!
-var.mult = names(d70)[c(5:38)] #3. on muld
-#var.mult[1] = "factor(muld)"
+var.mult = names(d70)[c(3, 5:38)] #3. on muld
+var.mult[1] = "factor(muld)"
 ssize = 10
 var.mult.sample = sample(var.mult,ssize)
 
 
 pred = matrix(0,nrow = dim(d_80)[1], ncol = 4)
-N = 2500; ssize = 3
+N = 100; ssize = 4
 for(i in 1:N){
   var.mult.sample = sample(var.mult,ssize)
-  formula = as.formula(paste("cl70", paste(var.mult.sample, collapse=" + "), sep=" ~ "))
-  m = stepAIC(multinom(formula, d80, maxit = 500), direction = "backward")
+  formula = as.formula(paste("cl80", paste(var.mult.sample, collapse=" + "), sep=" ~ "))
+  m = stepAIC(multinom(formula, d80, maxit = 1000))
   #m = multinom(formula, d80, maxit = 100) #võtsin maxit 1000 pealt 100 peale
   pred0 = predict(m, newdata = d_80, type = "probs")
   pred = pred0 + pred
@@ -539,5 +540,6 @@ plot(dp[,14],dp[,5], xlab = "Muu", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1
 
 sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4) 
 #ssize = 3; N = 500: #0.2063837; N = 2500: 0.2065031
-#sama ilma kaaludeta: 0.2075632; 0.2056211
+#sama ilma kaaludeta: 0.2075632; 0.2056211; n500 mullaga 0.2054041, kui step direction default: 0.2052452
+#ssize 4 n500 0.2107895, n1000 mullaga 0.2088891, viimane d70: 0.2124759
 
