@@ -695,14 +695,14 @@ min(kov) #0.1930893 jama
 
 setwd("A:/MAKA/TEST")
 rfs = vector("list", length = 12)
-mds = seq(5,26, by = 3)
-msls = seq(1,7,1)
+mds = seq(15,25,1)
+msls = seq(1,2,1)
 for(j in 1:length(msls)){
   vec = vector("list", length = length(mds))
   jj = msls[j]
   for(k in 1:length(mds)){
     md = mds[k]
-    name <- paste("CART_BAGGING_100_455_",jj,md, sep = "") #no tegelt 455...
+    name <- paste("CART_BAGGING_N250_455_",jj,md, sep = "") #no tegelt 455...
     name <- paste(name,".csv", sep = "")
     vec[[k]] <- read.csv(name)
   }
@@ -731,7 +731,7 @@ for(j in 1:length(msls)){
 
 pheatmap(kov, cluster_rows = F, cluster_cols = F)
 which(kov == min(kov), arr.ind = TRUE)#2 ja 7, seega msl = 2 ja md = 23
-min(kov) #0.1649619 seni parim!
+min(kov) #0.1649619 seni parim! N100 pealt
 
 
 ############# kuupäevade kaupa! ##############
