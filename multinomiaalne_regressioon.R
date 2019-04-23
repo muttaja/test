@@ -210,7 +210,7 @@ abline(lm(dp[,5] ~ dp[,14]))
 
 
 #mitme (suvalise) tunnuse ja kui suure karistusliikme kasutamine annab parima hinnangu?
-imps = FI2$Feature[1:40]; imps = as.character(imps)
+imps = FI2$Feature[1:20]; imps = as.character(imps)
 N = 100
 Y = dd$cl80
 ids = data$aproovitykk_id
@@ -235,11 +235,29 @@ for(l in 1:20){
   }
 }
 
-min(heat2);which(heat2 == min(heat2), arr.ind = TRUE) #sain tunnuste arv 3, lambda = 7, min=0.1871927
+min(heat2);which(heat2 == min(heat2), arr.ind = TRUE) #sain tunnuste arv 7, lambda = 7, min=0.1888745
+
+moos = as.data.frame(heat2)
+colnames(moos) = paste("Lambda_", 1:20, sep = "")
+moos$tunnuseid = paste("Tunnuste arv_", 1:20, sep = "")
+moos$sort = 1:20
+moos.m <- melt(moos,id.vars = c("tunnuseid","sort"))
+moos.m$tunnuseid = as.factor(moos.m$tunnuseid)
+moos.m$tunnuseid <- factor(moos.m$tunnuseid, levels= unique((moos.m$tunnuseid)[order(moos.m$sort)]))
+
+plot = ggplot(moos.m,aes(variable,tunnuseid)) + geom_tile(aes(fill=value),color = "white") +
+  guides(fill=guide_colorbar("RMSE")) +
+  scale_fill_gradientn(colors=c("skyblue","yellow","tomato"),guide="colorbar") +
+  theme(axis.text.x = element_text(angle = 270, hjust = 0,vjust=-0.05))
+plot + labs(x = "", y = "")
 
 
-#see oli ristvalideerimata (muidu oleks ajakulu meeletud): parimate parameetritega ristvalideeritult:
-N = 1000;  m = 3; lambda = 7
+
+#see oli ristvalideerimata (muidu oleks ajakulu meeletud).
+#parimate parameetritega ristvalideeritult (7 parimat tunnust, lambda = 7):
+
+imps = FI2$Feature[1:20]; imps = as.character(imps);imps[stri_length(imps) < 4] = paste("X",imps[stri_length(imps) < 4], sep = "")
+N = 250;  m = 7; lambda = 7
 Y1 = dd$cl80
 pred = matrix(0, ncol = 4,nrow = 455)
 for(i in 1:N){
@@ -270,17 +288,18 @@ dp = merge(predN, taks.info, by = "aproovitykk_id", all.x = T)
 nms = names(dp); nms[2] = "V4";nms[3] = "V2"; nms[4] = "V1";nms[5] = "V3"; dp = dp[nms]
 sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4)
 #0.2010435 N1000
-
+#eks siin annaks seda ka optimeerida, mitme esimese tunnuse seast tunnseid valitakse
+#0.196028 N=100, kui 20 esimest tunnust; 0.196; N250: 0.195866
 
 dev.off()
 par(mfrow = c(2,2))
-plot(dp[,11],dp[,2], xlab = "Mänd", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,11],dp[,2], xlab = "Mänd", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369), pch = 16)
 abline(lm(dp[,2] ~ dp[,11]))
-plot(dp[,12],dp[,3], xlab = "Kuusk", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,12],dp[,3], xlab = "Kuusk", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369), pch = 16)
 abline(lm(dp[,3] ~ dp[,12]))
-plot(dp[,13],dp[,4], xlab = "Kask", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,13],dp[,4], xlab = "Kask", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369), pch = 16)
 abline(lm(dp[,4] ~ dp[,13]))
-plot(dp[,14],dp[,5], xlab = "Muu", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,14],dp[,5], xlab = "Muu", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369), pch = 16)
 abline(lm(dp[,5] ~ dp[,14]))
 
 
