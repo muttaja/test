@@ -1,5 +1,5 @@
 #knn_koos uuesti
-
+setwd("A:/MAKA/TEST/test")
 data = read.csv(file = "d506_100.csv")
 vars = names(data)[c(3:38,47:60)]
 sidxx = data$aproovitykk_id
@@ -12,21 +12,22 @@ data_puud = data_puud[,(4*tvmaht-1):(4*tvmaht+2)]
 
 
 ##########################################################
-bestvars.koos.455 = fun_bestvars(1,25,sidxx, kernel = epa)
+#bestvars.koos.455 = fun_bestvars(1,25,sidxx, kernel = epa)
 ##########################################################
 #save(bestvars.koos.455,file = "bestvars_koos_455.RData")
+load(file = "bestvars_koos_455.RData", verbose = T)
 
 vark = bestvars.koos.455[[1]]
 rss = unlist(bestvars.koos.455[[2]])
 
-rss.opt = c()
-w.opt = vector("list", length=25)
-for(k in 1:25){
-  print(Sys.time())
-  opt.k = optim(par = rep(1, length(vark[[k]])), fn = fun_opti, k = k, vars = vark[[k]], data = data, sidxx = sidxx,method = "BFGS", kernel = epa)
-  w.opt[[k]] = opt.k$par
-  rss.opt[k] = opt.k$value
-}
+# rss.opt = c()
+# w.opt = vector("list", length=25)
+# for(k in 1:25){
+#   print(Sys.time())
+#   opt.k = optim(par = rep(1, length(vark[[k]])), fn = fun_opti, k = k, vars = vark[[k]], data = data, sidxx = sidxx,method = "BFGS", kernel = epa)
+#   w.opt[[k]] = opt.k$par
+#   rss.opt[k] = opt.k$value
+# }
 
 #save(w.opt, file = "bestvars_koos_455_optweights.RData")
 load(file = "bestvars_koos_455_optweights.RData", verbose = T)
@@ -127,7 +128,8 @@ for(k in 1:25){
 }
 
 plot(rss.opt)
-save(w.opt, file = "bestvars_koos_455_uus_landsat_to_sentinel_optweights.RData")
+#save(w.opt, file = "bestvars_koos_455_uus_landsat_to_sentinel_optweights.RData")
+#kirjutasin kahjuks üle
 
 
 
@@ -156,8 +158,7 @@ agre.epa <- function(arg,data_puud){
   indx = arg[1:kk]; props = arg[(kk+1):(2*kk)]
   estimations = data_puud[indx,] #*props
   est.epa = t(apply(estimations, 2, epa.kernel.w, weights = props))
-  #print(dim(est.epa));print(est.epa);print(sum(est.epa[1,]))
-  if(sum(est.epa[1,]) == 0){est.epa = c(0.25,0.25,0.25,0.25)}
+  if(any(is.na(est.epa))|sum(est.epa[1,]) == 0){est.epa = c(0.25,0.25,0.25,0.25)}
   est.epa
 }
 
@@ -166,9 +167,7 @@ agre.beta <- function(arg,data_puud){
   indx = arg[1:kk]; props = arg[(kk+1):(2*kk)]
   estimations = data_puud[indx,] #*props
   est.beta = t(apply(estimations, 2, beta.w, weights = props))
-  #print(est.beta);print(props);print(estimations)
-  #print(dim(est.epa));print(est.epa);print(sum(est.epa[1,]))
-  if(sum(est.beta[1,]) == 0){est.beta = c(0.25,0.25,0.25,0.25)}
+  if(any(is.na(est.beta))|sum(est.beta[1,]) == 0){est.beta = c(0.25,0.25,0.25,0.25)}
   est.beta
 }
 
@@ -193,46 +192,92 @@ epa.kernel.w = function(vec, kernel = "epanechnikov", weights){
     }
   max
 }
-
-#require(RPMM)
+require(EnvStats)
+require(RPMM)
 beta.w = function(vec, weights){
   #print(vec)
   vec = vec[-length(vec)]
-  weights[is.na(weights)] = 0
+  #weights[is.na(weights)] = 1
   weights = weights[-length(weights)]
-  weights = weights/max(weights)
+  weights = weights/sum(weights)
   #weights = weights / sum(weights)
   if(length(vec) < 2){max = vec}
   else{
     if(length(vec[weights >0]) < 2){max = sum(vec*weights)}
     else{
-      #weights = c(0.31496338, 0.22639652, 0.20455069, 0.17876645, 0.07532296)
-      #vec = c(0,.65,0,0,0)
-      #vec = c(.1,0,0,.3,0,.8)
-      #vec = c(.5,.4,.2,.5,.4)
-      be = betaEst(y = vec, weights = weights, w = rep(1/length(vec), length(vec))) #mis on posterior weigths?
-      print(be);print(vec)
-      if(be[1] == 1 & be[2] == 1){max = sum(vec*weights)}
-      else{
-        opt = optimize(interval = c(0,1), dbeta, shape1 = be[1], shape2 = be[2], maximum = T)
-        max = opt$`maximum`
-      }
-      if((be[1] < 1 & be[2] < 1)){
-        max = sum(vec*weights)
-      }
+      max = tryCatch(try.beta(vec = vec, weights = weights), error=function(err) sum(vec*weights))
     }
   }
   max
 }
 
-cc = c(0,1,0.2,0.3);
-cc = matrix(rexp(n = 4*6), nrow = 4,ncol = 6); cc = cc/colSums(cc)
+
+try.beta = function(vec, weights){
+  be = est.beta(vec = vec, ws = weights)
+  if(be$par[1] == 1 & be$par[2] == 1){max = sum(vec*weights)}
+  else{
+    opt = optimize(interval = c(0,1), dbeta, shape1 = be$par[1], shape2 = be$par[2], maximum = T)
+    max = opt$`maximum`;
+  }
+  if((be$par[1] < 1 & be$par[2] < 1)){
+    max = sum(vec*weights)
+  }
+  max
+}
+
+
+cc = c(0,0.1,0.2,0.3);
+cc = matrix(rexp(n = 4*6), nrow = 4,ncol = 6); cc = cc/max(cc)
 ww = c(0.5,0.000045,0.1,0.1)
-ww = rep(0.25,4)
+ww = rep(1,4)
 betaEstMultiple(cc,ww)
-ebeta(cc[,6])
-eba = betaEst(ww, w = rep(1,4), weights = ww)
+ebeta(cc[,2])
+eba = betaEst(cc, w = rep(1,4), weights = ww)
 #võtta posteriorid lihstalt 1?
+
+#tuleb ikka ise kirjutada1?
+
+lf.beta = function(D,x,w){
+  #D = c(,2); x = cc[,2] -0.05 ;w = rep(1,length(x))
+  #x = cc[,2]
+  x = (x*698+0.5)/699
+  a = D[1];b=D[2];n = length(x)
+  w = w/sum(w)*n
+  #n*log(gamma(a+b)) - n*log(gamma(a)) - n*log(gamma(b))+(a-1)*sum(log(x*w)) + (b-1)*sum(log(1-x*w))
+  #loglik = n*log(gamma(a+b)) - n*log(gamma(a)) - n*log(gamma(b)) + sum(log((w*((x)**(a-1))))) + sum(log((w*((1-x)**(b-1)))))
+  loglik = n*log(gamma(a+b)) - n*log(gamma(a)) - n*log(gamma(b)) + sum(w*(log((((x)**(a-1)))))) + sum(w*(log((((1-x)**(b-1)))))) #kurrrat, äkki see ikka vale!?
+  -loglik
+}
+
+est.beta = function(vec, ws = rep(1,length(vec)), init = c(6,9)){
+  opt = optim(par = init, fn = lf.beta, x = vec, w = ws, method = "L-BFGS-B", lower = c(1.1,1.1), upper = c(50,50)) #muidu gamma läheb out of range!? kui sunniks kujupar olema üle 1?
+  opt
+}
+
+
+b2 = ebeta(cc[,2])
+xx = seq(0,1,0.01)
+par(mfrow = c(2,2))
+#cc[,2] #1.0000000 0.7636090 0.5730523 0.134233
+b1 = est.beta(cc[,2],init = c(4,8), ws = c(1.05,0.05,0.1,0.81))
+plot(xx,dbeta(xx,shape1 = b1$par[1],shape2 = b1$par[2]))
+b1 = est.beta(cc[,2],init = c(4,8), ws = c(0.05,0.05,0.1,0.81))
+plot(xx,dbeta(xx,shape1 = b1$par[1],shape2 = b1$par[2]))
+b1 = est.beta(cc[,2],init = c(4,8), ws = c(0.05,1.5,0.1,0.21))
+plot(xx,dbeta(xx,shape1 = b1$par[1],shape2 = b1$par[2]))
+b1 = est.beta(cc[,2],init = c(4,8), ws = c(0.05,0.05,1.1,0.11))
+plot(xx,dbeta(xx,shape1 = b1$par[1],shape2 = b1$par[2]))
+
+
+
+plot(xx,dbeta(xx,shape1 = b2$parameters[1],shape2 = b2$parameters[2]))
+#töötab pmst :), aga kaaludega mitte....
+#nüüd kaalud ka meigivad nats senssi
+
+w = c(0.05,0.05,0.1,0.81)
+sum(log((w*((x)**(a-1)))))
+
+
 
 #######################################################
 
@@ -250,7 +295,9 @@ data_puud = data_puud[,(4*tvmaht-1):(4*tvmaht+2)]
 ##########################################################
 
 #save(bestvars.koos.455.agre.beta,file = "bestvars_koos_455_agre_beta.RData")
-bestvars.koos.455.agre.tava.beta = fun_bestvars(10,25,sidxx, kernel = tava, agre = agre.beta)
+bestvars.koos.455.agre.tava.beta = fun_bestvars(1,25,sidxx, kernel = tava, agre = agre.beta)
+bestvars.koos.455.agre.epa.beta = fun_bestvars(1,25,sidxx, kernel = epa, agre = agre.beta)
+
 #save(bestvars.koos.455.agre.tava.beta,file = "bestvars_koos_455_agre_tava_beta.RData")
 
 rss = unlist(bestvars.koos.455.agre.beta[[2]]); plot(rss, type = "o")
@@ -261,7 +308,7 @@ rss = unlist(bestvars.koos.455.agre.tava.beta[[2]]); plot(rss, type = "o")
 
 #save(bestvars.koos.455.agre.tava.epa,file = "bestvars_koos_455_agre_tava_epa.RData")
 
-vark = bestvars.koos.455.agre.beta[[1]][[10]] #7. ehk tegelt k = 16 parim
+vark = bestvars.koos.455.agre.tava.beta[[1]][[1]] #7. ehk tegelt k = 16 parim
 opt.epa_kaugus.beta_agre = optim(par = rep(1, length(vark)), fn = fun_opti, k = 19, vars = vark, data = data, sidxx = sidxx,method = "BFGS", kernel = epa, agre = agre.beta)
 #0.1718480 --->>> 0.1664395
 #opt.epa.beta16 [1] 0.1664395
@@ -269,15 +316,18 @@ opt.epa_kaugus.beta_agre = optim(par = rep(1, length(vark)), fn = fun_opti, k = 
 
 #kuidas parim välja näeb?
 wgt = opt.epa.beta16$par
-best_vars = bestvars.koos.455.agre.beta[[1]][[7]]
+best_vars = bestvars.koos.455.agre.tava.beta[[1]][[1]]
+
+#testiks
+
+#best_vars =vars[28:37]
 dex = data[,c("aproovitykk_id",best_vars)]
 dex = dex[dex$aproovitykk_id %in% sidxx,]
 dex[,-1] = t((t(as.matrix(dex[,-1])))*wgt)
 dex$cl = "cl"
 
-test  = fun_agre_kernel(dex, data_puud, k = 16, sid = sidxx, kernel = epa, agre = agre.beta)
+test  = fun_agre_kernel(dex, data_puud, k = 20, sid = sidxx, kernel = tava, agre = agre.beta)
 dp = merge(test, taks.info, all.x = T, by = "aproovitykk_id")
-par(mfrow=C(2,2))
 dev.off()
 par(mfrow = c(2,2))
 plot(dp[,11],dp[,2], xlab = "Mänd", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369), pch = 16)
@@ -290,8 +340,7 @@ plot(dp[,14],dp[,5], xlab = "Muu", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1
 abline(lm(dp[,5] ~ dp[,14]))
 
 sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4)
-#0.1780016 --->>> opt 0.1763254
-#0.1785899 --->>> opt 0.1760782 tava16
+#beta 20 naabriga optimeerimata: 0.1984361
 
 #k = 9
 vark = bestvars.koos.455.agre.tava.epa[[1]][[16]]
@@ -405,4 +454,75 @@ fun_opti = function(w,k,vars,data, sidxx, kernel, agre = agre){
 }
 
 
+############################
 
+#ENAMUSPUULIIK!
+#Piiriks, kui ühte puuliiki enam kui 75%
+data = dp;
+data = data[,c(2:5,11:14)]
+names(data)#4 esimest hinnangud, 4 viimast tõde
+
+liiks = c("MA", "KU", "KS", "MUU")
+max.liik = function(vec){
+  c(max(vec),liiks[which.max(vec)])
+}
+
+data$max = NA;data$max.liik = NA
+
+data[,9:10] = t(apply(data[,5:8],1,max.liik))
+data.max = data[data$max > 0.75,]
+data.max$suurim.prop = "ei"
+
+data.max[,11] = t(apply(data.max[,1:4],1,max.liik))[,2]
+confusion.matrix = as.matrix(table(data.max$max.liik, data.max$suurim.prop)[liiks,liiks])
+confusion.matrix
+
+#       MA  KU  KS MUU
+# MA  110   0   1   0
+# KU    1  25   2   0
+# KS    0   0  33   2
+# MUU   0   1   4  17
+
+#veerud "tõde"; nt 1 mänd on kuuseks hinnatud
+
+sum(diag(confusion.matrix)) / sum(confusion.matrix)
+#0.9438776 õigesti hinnatud
+
+#kui paljudel kordadel kõige suurem hinnang on kõige levinum liik?
+#nt piiriks 50%?
+
+data$max.hinnang = NA;data$max.hinnang.liik = NA
+data[,11:12] = t(apply(data[,1:4],1,max.liik))
+data.max1 = data[data$max.hinnang > 0.5,]
+conf1 = as.matrix(table(data.max1$max.hinnang.liik, data.max1$max.liik)[liiks,liiks])
+t(conf1)
+
+#siin saad teha ploti, alates mis % on tegemist ALATI kõige levinuma liigiga :)
+
+      # KS  KU  MA MUU
+# KS   57   8   2   9
+# KU    1  45   8   1
+# MA    0   3 161   0
+# MUU   4   1   0  26
+
+#Näiteks, kui suurim hinnang on üle 50% ja on "muu", siis tegelikult on 9 juhul 36-st tegemist kasega ja ühel juhul kuusega
+
+#data.max1[data.max1$max.hinnang.liik == "MUU",]
+
+#plot
+
+xx = c(min(data$max.hinnang),seq(0.32,1,0.01))
+pc = c()
+
+for(i in 1:length(xx)){
+  data.max1 = data[data$max.hinnang >= xx[i],]
+  conf1 = table(data.max1$max.hinnang.liik, data.max1$max.liik)
+  pc0 = sum(diag(conf1)) / sum(conf1)
+  pc = c(pc,pc0)
+}
+
+par(mfrow = c(1,1))
+plot(xx,pc, type = "o", col = rgb(red = 0, green = 0, blue = 0, alpha = 0.69), pch = 16, xlab = "Osakaalude hinnangu maksimum", ylab = "Täpsus")
+
+min(xx[pc > 0.95]) #Kui mingi liigi osakaal on üle 58% hinnatud, siis 95% juhtudek on see kõige levinum liik
+min(xx[pc >= 1]) #Kui mingi liigi osakaal on üle 73% hinnatud, siis kõikidel juhtudel on see olnud kõige levinum liik

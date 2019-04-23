@@ -545,7 +545,10 @@ sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4)
 #ssize = 4 korral nüüd 0.2033682
 
 #nüüd kõik elemendid:
-N = 100; ssize = 8
+
+#aga kui võtta RF-olulised?
+var.mult = vars # FI2$Feature[1:20]
+N = 50; ssize = 5
 #obsinout = vector("list", length = 2); obsinout[[1]] = d80$aproovitykk_id;obsinout[[2]] = d_80$aproovitykk_id
 pred = matrix(0,nrow = dim(d_80)[1], ncol = 4)
 pred1 = data.frame("aproovitykk_id" = sidxx, "MA" = 0, "KU" = 0, "KS" = 0, "KX" = 0)
@@ -580,10 +583,13 @@ plot(dp[,13],dp[,4], xlab = "Kask", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,
 plot(dp[,14],dp[,5], xlab = "Muu", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
 
 sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4) 
-#N100 ssize 4: 0.1987356
-#N100 ssize 5: 0.198063
-#N250 ssize 5: 0.1968571, ehk ennu kasvatamine suurt midagi juurde ei anna
-#N100 ssize 6: 0.1985812
+#                         RF-oluliste tunnuste pealt    
+                           #N10 ssize 1: 0.2565358
+                          #N50 ssize 2: 0.2027469
+                          #N50 ssize 3: 0.1986232
+#N100 ssize 4: 0.1987356                0.2081682
+#N100 ssize 5: 0.198063                 0.2109939
+#N100 ssize 6: 0.1985812                
 #N100 ssize 7: 0.1989825
 #n100 ssize 8: 0.1989967
 #n100 ssize 9: 0.1989967
@@ -657,19 +663,22 @@ sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4)
 require(npmr)
 
 RMSE.imps.min = c()
-for(j in 1:25){
+for(j in 15:15){
 imps = FI2$Feature[1:j]; imps = as.character(imps)
-imps = c(imps,"muld")
+require(stringi)
+imps[stri_length(imps) < 4] = paste("X",imps[stri_length(imps) < 4], sep = "")
+#imps = c(imps,"muld")
 dd = d80
 dd0 = d_80
 Y = dd$cl80 #siia 70 või 80
 X = as.matrix(dd[imps]); 
-lammas = 1:500
+lammas = 1:200
 m1 = npmr(X = X, Y = Y, lambda = lammas)
 testX = as.matrix(dd0[imps])
 tst = predict.npmr(m1, testX)
 tst.train = predict.npmr(m1,X)
 
+#imps = FI2$Feature[1:5]; imps = as.character(imps)
 RMSE.lammas = c()
 for(i in 1:200){
   tt = as.data.frame(tst[,,i])
@@ -681,44 +690,240 @@ for(i in 1:200){
   nms = names(dp); nms[2] = "V4";nms[3] = "V2"; nms[4] = "V1";nms[5] = "V3"; dp = dp[nms]
   RMSE.lammas[i] = sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4)
 }
+print(RMSE.lammas)
+plot(RMSE.lammas); which.min(RMSE.lammas)
 RMSE.imps.min[j] = min(RMSE.lammas)
 }
 plot(RMSE.imps.min, type = "o")
 min(RMSE.imps.min); which.min(RMSE.imps.min)
-#d 70: 0.1915064, imps = 15
-#d 80:0.1911724, imps = 15
+#d 70: 0.1911186, imps = 28
+#d 80: 0.1905613, imps = 29, 0.1902863 imps 40 (kui võtta 40, siis on parim tulemus 40 juures)
+#d80 nõks paremad tulemused
+#bagging!?
+
+#parim lambda 5 tunnuse korral?
 
 
+imps = FI2$Feature[1:20]; imps = as.character(imps);imps[stri_length(imps) < 4] = paste("X",imps[stri_length(imps) < 4], sep = "")
+N = 100
+m = 5
+lambda = 10
+Y = dd$cl80
+ids = data$aproovitykk_id
+pred = matrix(0,nrow = 455, ncol = 4)
+for(i in 1:N){
+  imp.sample = sample(imps,m)
+  X = as.matrix(dd[imp.sample]) 
+  m1 = npmr(X = X, Y = Y, lambda = lambda)
+  dataX = as.matrix(data[imp.sample]) 
+  pred0 = predict.npmr(m1, dataX)[,,1]
+  #pred$aproovitykk_id = ids ei ole vaja, kui lihtsalt keskmine võtta
+  pred = pred + pred0
+}
 
-tt = as.data.frame(tst[,,5])
-tt$aproovitykk_id = d_80$aproovitykk_id
-dp = merge(tt, taks.info, by = "aproovitykk_id", all.x = T)
-dev.off()
-par(mfrow = c(2,2))
-plot(dp[,11],dp[,5], xlab = "Mänd", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
-plot(dp[,12],dp[,3], xlab = "Kuusk", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
-plot(dp[,13],dp[,2], xlab = "Kask", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
-plot(dp[,14],dp[,4], xlab = "Muu", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
-
-
-#aga sama asi orig. andmete peal?
-tst.train = predict.npmr(m1,X)
-
-tt.train = as.data.frame(tst.train[,,5])
-tt.train$aproovitykk_id = d80$aproovitykk_id
-tt = rbind(tt,tt.train)
-dp = merge(tt, taks.info, by = "aproovitykk_id", all.x = T)
-dev.off()
-par(mfrow = c(2,2))
-plot(dp[,11],dp[,5], xlab = "Mänd", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
-plot(dp[,12],dp[,3], xlab = "Kuusk", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
-plot(dp[,13],dp[,2], xlab = "Kask", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
-plot(dp[,14],dp[,4], xlab = "Muu", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
-
-nms = names(dp); nms[2] = "V4";nms[3] = "V2"; nms[4] = "V1";nms[5] = "V3"; dp = dp[nms]
+rowSums(pred / N)
+predN = data.frame(pred/N)
+predN$aproovitykk_id = ids
+dp = merge(predN, taks.info, by = "aproovitykk_id", all.x = T)
+nms = names(dp); nms[2] = "X4";nms[3] = "X2"; nms[4] = "X1";nms[5] = "X3"; dp = dp[nms]
 sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4)
-#0.1979767
+#0.2072665 :(
 
+dev.off()
+par(mfrow = c(2,2))
+plot(dp[,11],dp[,2], xlab = "Mänd", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,12],dp[,3], xlab = "Kuusk", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,13],dp[,4], xlab = "Kask", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,14],dp[,5], xlab = "Muu", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+
+N = 100
+Y = dd$cl80
+ids = data$aproovitykk_id
+heat = matrix(NA,20,20)
+for(l in 1:20){
+  for(m in 1:20) {
+    lambda = l
+    pred = matrix(0,nrow = 455, ncol = 4)
+    for(i in 1:N){
+      imp.sample = sample(imps,m)
+      X = as.matrix(dd[imp.sample]) 
+      m1 = npmr(X = X, Y = Y, lambda = lambda)
+      dataX = as.matrix(data[imp.sample]) 
+      pred0 = predict.npmr(m1, dataX)[,,1]
+      #pred$aproovitykk_id = ids ei ole vaja, kui lihtsalt keskmine võtta
+      pred = pred + pred0
+    }
+    predN = data.frame(pred/N)
+    predN$aproovitykk_id = ids
+    dp = merge(predN, taks.info, by = "aproovitykk_id", all.x = T)
+    nms = names(dp); nms[2] = "X4";nms[3] = "X2"; nms[4] = "X1";nms[5] = "X3"; dp = dp[nms]
+    heat[l,m] = sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4)
+  }
+}
+
+#save(heat, file = "penalizedMR_N100_features_40_parima_seast.RData")
+#ave(heat, file = "penalizedMR_N100_features_20_parima_seast.RData")
+
+load(file = "penalizedMR_N100_features_40_parima_seast.RData")
+
+
+min(heat) #18.6: tunnuste arv 1!!!, lambda = 6; teisel katsel 0.1876159, lambda 8, tunnuste arv 6
+which(heat == min(heat), arr.ind = TRUE)
+
+#nüüd sain tunnuste arv 3, lambda = 7 ja  0.1871927
+#kui valida 20 parima tunnuse seast? siis 0.189083
+
+#
+moos = as.data.frame(heat)
+colnames(moos) = paste("Lambda_", 1:20, sep = "")
+moos$tunnuseid = paste("Tunnuste arv_", 1:20, sep = "")
+moos$sort = 1:20
+
+moos.m <- melt(moos,id.vars = c("tunnuseid","sort"))
+moos.m$tunnuseid = as.factor(moos.m$tunnuseid)
+
+moos.m$tunnuseid <- factor(moos.m$tunnuseid, levels= unique((moos.m$tunnuseid)[order(moos.m$sort)]))
+
+
+plot = ggplot(moos.m,aes(variable,tunnuseid)) + geom_tile(aes(fill=value),color = "white") +
+  guides(fill=guide_colorbar("RMSE")) +
+  scale_fill_gradientn(colors=c("skyblue","yellow","tomato"),guide="colorbar") +
+  theme(axis.text.x = element_text(angle = 270, hjust = 0,vjust=-0.05))
+plot + labs(x = "", y = "")
+
+#proovime selle lambda 6, tunnuseid 8: N = 1000 korral tuli 0.188552
+#kui beta-ga agregeerida, siis:
+
+N = 100;
+m = 8
+lambda = 6
+Y = dd$cl80
+ids = data$aproovitykk_id
+pred = matrix(0,nrow = 455, ncol = 4)
+
+df = data.frame(X1 = c(), X2 = c(), X3 = c(), X4 = c(), aproovitykk_id = c())
+
+
+for(i in 1:N){
+  imp.sample = sample(imps,m)
+  X = as.matrix(dd[imp.sample]) 
+  m1 = npmr(X = X, Y = Y, lambda = lambda)
+  dataX = as.matrix(data[imp.sample]) 
+  pred0 = data.frame(predict.npmr(m1, dataX)[,,1])
+  pred0$aproovitykk_id = ids #ei ole vaja, kui lihtsalt keskmine võtta
+  df = rbind(df,pred0)
+  #pred = pred + pred0
+}
+
+#need ainult mean jaoks
+#predN = data.frame(pred/N)
+#predN$aproovitykk_id = ids
+
+df1 = df
+#df1[,1:4] = (df1[,1:4]*5488 + 0.5)/5489
+df1[,1:4] = df1[,1:4] / rowSums(df1[,1:4])
+mult = df1 %>% group_by(aproovitykk_id) %>% summarise_all(funs(epa.kernel)) #bets_fun(.,method = "mme")
+dp = merge(mult, taks.info, by = "aproovitykk_id", all.x = T)
+nms = names(dp); nms[2] = "X4";nms[3] = "X2"; nms[4] = "X1";nms[5] = "X3"; dp = dp[nms]
+sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4)
+#bets: 0.1985807
+#mean 0.1876734
+#epa.kernel 0.1952159
+
+dev.off()
+par(mfrow = c(2,2))
+plot(dp[,11],dp[,2], xlab = "Mänd", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,12],dp[,3], xlab = "Kuusk", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,13],dp[,4], xlab = "Kask", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,14],dp[,5], xlab = "Muu", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+
+
+N = 100;  m = 3; lambda = 7
+Y1 = dd$cl80
+pred = matrix(0, ncol = 4,nrow = 455)
+
+pred = data.frame("X1" = 0, "X2" = 0, "X3" = 0, "X4" = 0, "aproovitkk_id" = data$aproovitykk_id)
+
+for(i in 1:N){
+  imp.sample = sample(imps,m)
+  X1 = as.matrix(d80[imp.sample]) 
+  m1 = npmr(X = X1, Y = Y1, lambda = lambda)
+  dataX = as.matrix(d_80[imp.sample]) 
+  pred1 = data.frame(predict.npmr(m1, dataX)[,,1])
+  pred1$aproovitykk_id = d_80$aproovitykk_id
+  pred[pred$aproovitkk_id %in% pred1$aproovitykk_id,1:4] = pred[pred$aproovitkk_id %in% pred1$aproovitykk_id,1:4] + pred1[,1:4]
+  m2 = cv.npmr(X = X2, Y = Y2, lambda = lambda)
+  pred2 = data.frame(predict.npmr(m1, X1)[,,1])
+  pred2$aproovitykk_id = d80$aproovitykk_id
+  pred[pred$aproovitkk_id %in% pred2$aproovitykk_id,1:4] = pred[pred$aproovitkk_id %in% pred2$aproovitykk_id,1:4] + pred2[,1:4]
+}
+
+
+predN = pred[,1:4] / N
+predN$aproovitykk_id = pred$aproovitkk_id
+dp = merge(predN, taks.info, by = "aproovitykk_id", all.x = T)
+nms = names(dp); nms[2] = "X4";nms[3] = "X2"; nms[4] = "X1";nms[5] = "X3"; dp = dp[nms]
+
+dev.off()
+par(mfrow = c(2,2))
+plot(dp[,11],dp[,2], xlab = "Mänd", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,12],dp[,3], xlab = "Kuusk", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,13],dp[,4], xlab = "Kask", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,14],dp[,5], xlab = "Muu", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4) #0.1999261
+
+
+#ristvalideerime natuke teisiti:
+# 3 7 parim, proovin ka 2 6
+N = 500;  m = 2; lambda = 6
+Y1 = dd$cl80
+pred = matrix(0, ncol = 4,nrow = 455)
+#pred = data.frame("X1" = 0, "X2" = 0, "X3" = 0, "X4" = 0, "aproovitkk_id" = data$aproovitykk_id)
+for(i in 1:N){
+  imp.sample = sample(imps,m)
+  X1 = as.matrix(d80[imp.sample]) 
+  m1 = npmr(X = X1, Y = Y1, lambda = lambda)
+  dataX = as.matrix(d_80[imp.sample]) 
+  pred1 = predict.npmr(m1, dataX)[,,1]
+  out1 = 1:dim(d80)[1];out2 = 2:dim(d80)[1];out2 = c(out2,1) #saab ainult kahe-kaupa predictida
+  pred00 = matrix(,nrow = 0, ncol = 4)
+  for(i in 1:dim(d80)[1]){
+    Y2 = Y1[-c(out1[i],out2[i])]
+    X2 = X1[-c(out1[i],out2[i]),]
+    m2 = npmr(X = X2, Y = Y2, lambda = lambda)
+    dataX = as.matrix(d80[imp.sample]) 
+    dataX = dataX[c(out1[i],out2[i]),]
+    pred2 = predict.npmr(m2, dataX)[,,1][1,]
+    pred00 = rbind(pred00,pred2)
+  }
+  pred1 = rbind(pred1,pred00)
+  pred = pred + pred1
+}
+
+predN = pred[,1:4] / N
+predN = as.data.frame(predN)
+predN$aproovitykk_id = c(d_80$aproovitykk_id,d80$aproovitykk_id)
+dp = merge(predN, taks.info, by = "aproovitykk_id", all.x = T)
+nms = names(dp); nms[2] = "V4";nms[3] = "V2"; nms[4] = "V1";nms[5] = "V3"; dp = dp[nms]
+sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4) #0.1999261
+#N=2 0.1992425
+
+#0.2034 nüüd n100
+#0.2010435 N1000
+#0.1952n100
+#kui paljude imp seast see on?
+
+
+dev.off()
+par(mfrow = c(2,2))
+plot(dp[,11],dp[,2], xlab = "Mänd", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369), pch = 16)
+abline(lm(dp[,2] ~ dp[,11]))
+plot(dp[,12],dp[,3], xlab = "Kuusk", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369), pch = 16)
+abline(lm(dp[,3] ~ dp[,12]))
+plot(dp[,13],dp[,4], xlab = "Kask", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369), pch = 16)
+abline(lm(dp[,4] ~ dp[,13]))
+plot(dp[,14],dp[,5], xlab = "Muu", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369), pch = 16)
+abline(lm(dp[,5] ~ dp[,14]))
 
 
 
