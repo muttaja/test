@@ -530,6 +530,7 @@ par(mfrow = c(1,1))
 plot(xx,pc, type = "o", col = rgb(red = 0, green = 0, blue = 0, alpha = 0.69), pch = 16, xlab = "Osakaalude hinnangu maksimum", ylab = "Täpsus")
 #siia saab ka lisada, kui palju selliseid takseeralasid on!
 
+max(pc[nr.taks > 0.5]) #pooltel kordadel täpsus 96.2%
 min(xx[pc > 0.95]) #Kui mingi liigi osakaal on üle 58% hinnatud, siis 95% juhtudek on see kõige levinum liik
 min(xx[pc >= 1]) #Kui mingi liigi osakaal on üle 73% hinnatud, siis kõikidel juhtudel on see olnud kõige levinum liik
 
