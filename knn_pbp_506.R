@@ -306,16 +306,20 @@ for(i in 1:15){
 #19 18 20 20 20 18 17 11 12 13 16  7 19 20 18
 
 load(file ="KNN_pbp_tv100_v2.RData")
-
-
+kps = unique(as.Date(data0$kp))
+kps1 = sort(as.Date(kps, format = "%Y-%m-%d"))
 #männid
 dev.off()
 par(mfrow = c(4, 4))
 for (i in 1:15) {
+  #i = 15
+  #kp0 = kps[i]
+  #kp1 = kps1[kps1 == kp0]
   kp = kps[i]
   kp_data = result.kp.tv100[[i]]
   kp_data = merge(kp_data, taks.info, all.x = T, by = "aproovitykk_id")
-  plot(kp_data[,11],kp_data[,2], main = paste("Mänd ", kp), xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+  plot(kp_data[,11],kp_data[,2], main = paste("Mänd ", kp), xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.2), ylab = "", xlab = "", pch = 19)
+  abline(lm(kp_data[,2]~kp_data[,11]))
 }
 
 #kuused
@@ -325,7 +329,8 @@ for (i in 1:15) {
   kp = kps[i]
   kp_data = result.kp.tv100[[i]]
   kp_data = merge(kp_data, taks.info, all.x = T, by = "aproovitykk_id")
-  plot(kp_data[,12],kp_data[,3], main = paste("Kuusk ", kp), xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+  plot(kp_data[,12],kp_data[,3], main = paste("Kuusk ", kp), xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.2), ylab = "", xlab = "", pch = 19)
+  abline(lm(kp_data[,3]~kp_data[,12]))
 }
 
 #kased
@@ -335,7 +340,8 @@ for (i in 1:15) {
   kp = kps[i]
   kp_data = result.kp.tv100[[i]]
   kp_data = merge(kp_data, taks.info, all.x = T, by = "aproovitykk_id")
-  plot(kp_data[,13],kp_data[,4], main = paste("Kask ", kp), xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+  plot(kp_data[,13],kp_data[,4], main = paste("Kask ", kp), xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.2), ylab = "", xlab = "", pch = 19)
+  abline(lm(kp_data[,4]~kp_data[,13]))
 }
 
 #muud
@@ -345,7 +351,8 @@ for (i in 1:15) {
   kp = kps[i]
   kp_data = result.kp.tv100[[i]]
   kp_data = merge(kp_data, taks.info, all.x = T, by = "aproovitykk_id")
-  plot(kp_data[,14],kp_data[,5], main = paste("Muu ", kp), xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+  plot(kp_data[,14],kp_data[,5], main = paste("Muu ", kp), xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.2), ylab = "", xlab = "", pch = 19)
+  abline(lm(kp_data[,5]~kp_data[,14]))
 }
 
 
@@ -386,7 +393,9 @@ par(mfrow = c(1, 1))
 ggplot(data = vead, aes(x = kp, y = vead)) + geom_point(aes(size = vaatlusi)) +
   scale_x_continuous(breaks = kps) +
   theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
-  labs(size = "Takseeralasid pildil", x = "Päev aastas", y = "RMSE")
+  labs(size = "Takseeralasid pildil", x = "Päev aastas", y = "RMSE") +
+  scale_x_continuous(minor_breaks = seq(100,300,10), lim = c(105,285)) + 
+  scale_y_continuous(minor_breaks = seq(0.15,0.3,0.05), lim = c(.14,.3))
 #punkti suuruseks vaatluste arv
 
 #liigikaupa
@@ -402,6 +411,26 @@ ggplot(data = vead.liik.long, aes(x = kp, y = value)) + geom_point(aes(size = va
   labs(size = "Takseeralasid pildil",colour = "Liik", x = "Päev aastas", y = "RMSE")
 
 
+par(mfrow = c(1, 1))
+ggplot(data = vead.liik.long, aes(x = kp, y = value)) + geom_point(aes(size = vaatlusi, colour = variable), alpha = 0.69) +
+  scale_x_continuous(breaks = kps) +
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) +
+  labs(size = "Takseeralasid pildil",colour = "Liik", x = "Päev aastas", y = "RMSE")  +
+  scale_x_continuous(minor_breaks = seq(100,300,10), lim = c(100,300)) + 
+  scale_y_continuous(minor_breaks = seq(0.15,0.3,0.05), lim = c(.14,.3))
+
+
+
+#vaatlusi id kohta, kas vead sõltuvad vaatluste arvust!?
+
+data0 = read.csv("sentinel455.csv")
+data0 = data0[,-c(14:20)];data0 = na.omit(data0)
+data0 = data0 %>% group_by(aproovitykk_id) %>% mutate(nvaatlusi = n())
+data0 = data0 %>% group_by(aproovitykk_id) %>% sample_n(1)
+data0 = data0[,c("aproovitykk_id","nvaatlusi")]
+table(data0$nvaatlusi)
+
+
 #kui võtta nende piltide tuim keskmine:
 
 kp_data = data.frame()
@@ -411,6 +440,23 @@ for(i in 1:15){
   kp_data0 = merge(kp_data0, taks.info, all.x = T, by = "aproovitykk_id")
   kp_data = rbind(kp_data, kp_data0)
 }
+
+kp_data = merge(kp_data, data0, all.x = T, by = "aproovitykk_id")
+
+
+vigan = kp_data[c(2:5,12:16)]
+fun.vigaN = function(df){
+  #df = vigan[vigan$nvaatlusi == 13,];df = df[,1:8]
+  rmse = sqrt((sum((df[,1:4] - df[,5:8])**2))/4/dim(df)[1])
+  print(rmse)
+  rmse
+}
+
+vigaN = vigan %>% group_by(nvaatlusi) %>% do(asd = fun.vigaN(.))
+par(mfrow = c(1,1))
+plot(vigaN$nvaatlusi, vigaN$asd, xlab = "Pilte takseerala kohta", ylab = "RMSE", type="o")
+
+
 
 KNN_PBP = kp_data[,1:5]
 KNN_PBP = KNN_PBP %>% group_by(aproovitykk_id) %>% summarise_all(funs(mean)) #bets_fun(.,method = "mme")
@@ -500,14 +546,14 @@ bets_fun1 = function(vec, method = "mle"){
 
 KNN_PBP_BETA0 = kp_data[,1:5]
 KNN_PBP_BETA = KNN_PBP_BETA0 %>% group_by(aproovitykk_id) %>% summarise_all(funs(bets_fun(.,method = "mle")))
-KNN_PBP_BETA1 = KNN_PBP_BETA0 %>% group_by(aproovitykk_id) %>% summarise_all(funs(bets_fun1))
+KNN_PBP_BETA1 = KNN_PBP_BETA0 %>% group_by(aproovitykk_id) %>% summarise_all(funs(dens1))
 
 
 test = round(KNN_PBP_BETA[,2:5],1);test$id = KNN_PBP_BETA$aproovitykk_id
 rsm = rowSums(KNN_PBP_BETA[,2:5]);hist(rsm);
 min(rsm);which.min(rsm) #bimodaalsusprobleem!
 max(rsm);which.max(rsm) #max on ok!
-sits = KNN_PBP_BETA$aproovitykk_id[451]
+sits = KNN_PBP_BETA$aproovitykk_id[325]
 pdid1 = kp_data[kp_data$aproovitykk_id == sits,]; pdid1 = pdid1[,2:5]
 pdid1 = kp_data[kp_data$aproovitykk_id == sits,]; pdid1 = pdid1[,2:5]
 mean(pdid1[,1]);mean(pdid1[,2]);mean(pdid1[,3]);mean(pdid1[,4])
@@ -528,6 +574,11 @@ plot(xx,dbeta(xx, shape1 = eb$parameters[1], shape2 = eb$parameters[2]))
 
 #hetkel jääb bimodaalsusprobleem sisse, aga plotime huvi pärast
 
+
+data.kp1 = kp_data[,1:5]
+data.kp1[,2:5] = (data.kp1[,2:5]*5488 + 0.5)/5489
+KNN_PBP_BETA = data.kp1 %>% group_by(aproovitykk_id) %>% summarise_all(funs(bets_fun2sd))
+
 kb1 = KNN_PBP_BETA
 rsm = rowSums(kb1[,2:5])
 kb1[,2:5] = kb1[2:5] / rsm
@@ -546,6 +597,10 @@ sqrt(mean((dp[,13]-dp[,4])**2))
 sqrt(mean((dp[,14]-dp[,5])**2))                     
 sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4)  
 #0.1811502 bets_fun; 0.1850817 betsfun2; 0.1812432 betsfun1; 0.1872116 mean; 0.1830631 beta mme
+#0.1796746 epa kernel!
+
+#17.04 saan teised tulemused:
+#mean: 0.1827703; 0.1761276; 0.1811502; 0.1816136
 
 
 #########################################################
@@ -585,21 +640,25 @@ coss = function(vec){
 }
 
 tava = function(vec){
+  vec = vec[-length(vec)] #annab ühe võrra pikema argumendi ette, kuna Epa-l on nii vaja
   props = 1/vec
   props1 = props/sum(props)
   if(sum(props) == 0){
     props1[1] = 1; props1[2:length(vec)] = 0
   }
-  props1
+  props1 = c(props1,0)
 }
 
-############## tricube
+############## tavaline kaugus
 
-load("taks_info.RData")
-load("sid601.RData")
-d601 = read.csv("d601.csv")
-data = d601
-vars = names(data)[3:49]
+d506.100 = read.csv(file = "d506_100.csv")
+data = d506.100
+vars = names(data)[c(2:37,46:59)]
+sidxx = d506.100$aproovitykk_id
+tvmaht = 2 #ehk siis proportsioonid!
+data_puud = taks.info[taks.info$aproovitykk_id %in% sidxx,]
+puud_true =  data_puud[,7:10]
+data_puud = data_puud[,(4*tvmaht-1):(4*tvmaht+2)]
 
 brss.k = c()
 tvmaht = 2
@@ -607,13 +666,13 @@ data_puud = taks.info[taks.info$aproovitykk_id %in% sidxx,]
 puud_true =  data_puud[,7:10]
 data_puud = data_puud[,(4*tvmaht-1):(4*tvmaht+2)]
 
-bestvars.k = fun_bestvars(5,20,sidxx,tric) #alustame viiest
-vark = bestvars.k[[1]]
-rss = unlist(bestvars.k[[2]])
+bestvars.tava = fun_bestvars(1,25,sidxx,tava) #alustame viiest
+vark = bestvars.tava[[1]]
+rss = unlist(bestvars.tava[[2]])
 bests = c(match(rss[order(rss)][1],rss),match(rss[order(rss)][2],rss),match(rss[order(rss)][3],rss))
-op1 = optim(par = rep(1, length(vark[[bests[1]]])), fn = fun_opti, k = bests[1], vars = vark[[bests[1]]], data = data, sidxx = sidxx,method = "BFGS", kernel = tric)
-op2 = optim(par = rep(1, length(vark[[bests[2]]])), fn = fun_opti, k = bests[2], vars = vark[[bests[2]]], data = data, sidxx = sidxx,method = "BFGS", kernel = tric)
-op3 = optim(par = rep(1, length(vark[[bests[3]]])), fn = fun_opti, k = bests[3], vars = vark[[bests[3]]], data = data, sidxx = sidxx,method = "BFGS", kernel = tric)
+op1 = optim(par = rep(1, length(vark[[bests[1]]])), fn = fun_opti, k = bests[1], vars = vark[[bests[1]]], data = data, sidxx = sidxx,method = "BFGS", kernel = tava)
+op2 = optim(par = rep(1, length(vark[[bests[2]]])), fn = fun_opti, k = bests[2], vars = vark[[bests[2]]], data = data, sidxx = sidxx,method = "BFGS", kernel = tava)
+op3 = optim(par = rep(1, length(vark[[bests[3]]])), fn = fun_opti, k = bests[3], vars = vark[[bests[3]]], data = data, sidxx = sidxx,method = "BFGS", kernel = tava)
 w.opt = vector("list", length=3);
 rss.opt = c()
 w.opt[[1]] = op1$par;   w.opt[[2]] = op2$par;   w.opt[[3]] = op3$par;
@@ -632,7 +691,84 @@ dex[,-1] = t((t(as.matrix(dex[,-1])))*wgt)
 dex$cl = "cl"
 print(best_k)
 print(brss.k)
-kp.result.tric = fun_agre_kernel(dex, data_puud, k = best_k, sid = sidxx, kernel = tric)
+kp.result.tava = fun_agre_kernel(dex, data_puud, k = best_k, sid = sidxx, kernel = tava)
+
+#loopis läbi lasta, et saaks kena graafiku:
+#nüüd ka tüvemahtude pealt! / KAS 1 või 2!
+tvmaht = 2
+data_puud = taks.info[taks.info$aproovitykk_id %in% sidxx,]
+puud_true =  data_puud[,7:10]
+data_puud = data_puud[,(4*tvmaht-1):(4*tvmaht+2)]
+
+bestvars.tava = fun_bestvars(1,25,sidxx,tava)
+vark = bestvars.tava[[1]]
+rss = unlist(bestvars.tava[[2]])
+
+rss.opt.tava = c()
+w.opt.tava = vector("list", length=25)
+for(k in 1:25){
+  print(Sys.time())
+  opt.k = optim(par = rep(1, length(vark[[k]])), fn = fun_opti, k = k, vars = vark[[k]], data = data, sidxx = sidxx,method = "BFGS", kernel = tava)
+  w.opt.tava[[k]] = opt.k$par
+  rss.opt.tava[k] = opt.k$value
+}
+
+knn.tava.props.19_04 = vector("list", length = 3);knn.tava.tm[[1]] = bestvars.tava; knn.tava.tm[[2]] = w.opt.tava; knn.tava.tm[[3]] = rss.opt.tava
+save(knn.tava.props.19_04, file = "knn_tava_props_19_04.RData")
+
+par(mfrow = c(1,1))
+plot(rss, type = "o", xlab = "Naabreid", ylab = "RMSE", ylim = c(0.16,0.23)) #RMSE: root-mean-squared-error
+points(x=c(1:25), y=rss.opt.tava, lty=1, col = "red", pch = 19)
+lines(x=c(1:25), y=rss.opt.tava, lty=3, col = "red")
+
+
+
+
+################ TRICUBE ##################
+bestvars.tric = fun_bestvars(1,25,sidxx,tric)
+vark = bestvars.tric[[1]]
+rss = unlist(bestvars.tric[[2]])
+
+rss.opt.tric = c()
+w.opt.tric = vector("list", length=25)
+for(k in 1:25){
+  print(Sys.time())
+  opt.k = optim(par = rep(1, length(vark[[k]])), fn = fun_opti, k = k, vars = vark[[k]], data = data, sidxx = sidxx,method = "BFGS", kernel = tric)
+  w.opt.tric[[k]] = opt.k$par
+  rss.opt.tric[k] = opt.k$value
+}
+
+#knn.tric.tm = vector("list", length = 3);knn.tric[[1]] = bestvars.tric; knn.tric[[2]] = w.opt.tric; knn.tric[[3]] = rss.opt.tric
+#save(knn.tric.tm, file = "knn_tric_tm.RData")
+
+par(mfrow = c(1,1))
+plot(rss, type = "o", xlab = "Naabreid", ylab = "RMSE", ylim = c(0.16,0.23))
+points(x=c(1:25), y=rss.opt.tric, lty=1, col = "red", pch = 19)
+lines(x=c(1:25), y=rss.opt.tric, lty=3, col = "red")
+################ EPANECHNIKOV uuesti #########
+bestvars.epav2 = fun_bestvars(1,25,sidxx,epa)
+vark = bestvars.epav2[[1]]
+rss = unlist(bestvars.epav2[[2]])
+
+rss.opt.epav2 = c()
+w.opt.epav2 = vector("list", length=25)
+for(k in 1:25){
+  print(Sys.time())
+  opt.k = optim(par = rep(1, length(vark[[k]])), fn = fun_opti, k = k, vars = vark[[k]], data = data, sidxx = sidxx,method = "BFGS", kernel = epa)
+  w.opt.epav2[[k]] = opt.k$par
+  rss.opt.epav2[k] = opt.k$value
+}
+
+#knn.epa.tm = vector("list", length = 3);knn.epa[[1]] = bestvars.epav2; knn.epa[[2]] = w.opt.epav2; knn.epa[[3]] = rss.opt.epav2
+#save(knn.epa.tm, file = "knn_epa_tm.RData")
+load(file = "knn_epa.RData")
+
+par(mfrow = c(1,1))
+plot(rss, type = "o", xlab = "Naabreid", ylab = "RMSE", ylim = c(0.16,0.23))
+points(x=c(1:25), y=rss.opt.epav2, lty=1, col = "red", pch = 19)
+lines(x=c(1:25), y=rss.opt.epav2, lty=3, col = "red")
+
+
 
 #k = 20
 # > best_vars
@@ -801,8 +937,19 @@ bets_fun2sd = function(vec, method = "mle"){
   max.d
 }
 
+################################################
 
-veadNpilt.epakernel = c()
+#uuesti 18.04, kuna tegin liiga koleda ploti :S
+
+load(file ="KNN_pbp_tv100_v2.RData", verbose = T) 
+data0 = read.csv("sentinel455.csv")
+kps = unique(data0$kp)
+list.kps = vector("list", length=length(kps))
+for(i in 1:length(kps)){
+  list.kps[[i]] = combn(kps,i)
+}
+
+veadNpilt.mean.0 = c()
 for(i in 1:length(kps)){
   print(i);print(Sys.time())
   vead = c()
@@ -816,7 +963,7 @@ for(i in 1:length(kps)){
       kp_data = rbind(kp_data, kp_data0)
     }
     #kp_data[,2:5] = (kp_data[,2:5]*(dim(kp_data)[1]-1) + 0.5)/dim(kp_data)[1] #seda on aint beta jaoks vaja
-    KNN_PBP = kp_data[,1:5] %>% group_by(aproovitykk_id) %>% summarise_all(funs(dens1))
+    KNN_PBP = kp_data[,1:5] %>% group_by(aproovitykk_id) %>% summarise_all(funs(mean))
     kb1 = KNN_PBP
     rsm = rowSums(kb1[,2:5])
     kb1[,2:5] = kb1[2:5] / rsm
@@ -824,11 +971,12 @@ for(i in 1:length(kps)){
     viga = sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4)
     vead[j] = viga
   }
-  veadNpilt.epakernel[i] = mean(vead)
-  print(veadNpilt.epakernel)
+  veadNpilt.mean.0[i] = mean(vead)
+  print(veadNpilt.mean.0)
 }
 
-veadNpilt.beta = c()
+
+veadNpilt.beta.0 = c()
 for(i in 1:length(kps)){
   print(i);print(Sys.time())
   vead = c()
@@ -841,7 +989,7 @@ for(i in 1:length(kps)){
       kp_data0 = merge(kp_data0, taks.info, all.x = T, by = "aproovitykk_id")
       kp_data = rbind(kp_data, kp_data0)
     }
-    #kp_data[,2:5] = (kp_data[,2:5]*(dim(kp_data)[1]-1) + 0.5)/dim(kp_data)[1] #seda on aint beta jaoks vaja
+    kp_data[,2:5] = (kp_data[,2:5]*(dim(kp_data)[1]-1) + 0.5)/dim(kp_data)[1] #seda on aint beta jaoks vaja
     KNN_PBP = kp_data[,1:5] %>% group_by(aproovitykk_id) %>% summarise_all(funs(bets_fun(.,method = "mle")))
     kb1 = KNN_PBP
     rsm = rowSums(kb1[,2:5])
@@ -850,13 +998,38 @@ for(i in 1:length(kps)){
     viga = sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4)
     vead[j] = viga
   }
-  veadNpilt.beta[i] = mean(vead)
-  print(veadNpilt.beta)
+  veadNpilt.beta.0[i] = mean(vead)
+  print(veadNpilt.beta.0)
 }
 
+veadNpilt.epakernel.0 = c()
+for(i in 8:length(kps)){
+  print(i);print(Sys.time())
+  vead = c()
+  for(j in 1:choose(length(kps),i)){
+    kp_data = data.frame()
+    for(h in 1:i){
+      kp = list.kps[[i]][h,j]
+      kk = match(kp, kps)
+      kp_data0 = result.kp.tv100[[kk]]; kp_data0$kp = kp
+      kp_data0 = merge(kp_data0, taks.info, all.x = T, by = "aproovitykk_id")
+      kp_data = rbind(kp_data, kp_data0)
+    }
+    KNN_PBP = kp_data[,1:5] %>% group_by(aproovitykk_id) %>% summarise_all(funs(epa.kernel))
+    kb1 = KNN_PBP
+    rsm = rowSums(kb1[,2:5])
+    kb1[,2:5] = kb1[2:5] / rsm
+    dp = merge(kb1, taks.info, by = "aproovitykk_id", all.x = T)
+    viga = sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4)
+    vead[j] = viga
+  }
+  veadNpilt.epakernel.0[i] = mean(vead)
+  print(veadNpilt.epakernel.0)
+}
 
-#11.04 öösel jäin siia
-#NB epakerneli puhul tuleks võtta "keskmine" trepi kõrgemaist astmest!
+save(veadNpilt.epakernel.0, file = "veadNpilt_epakernel.RData")
+save(veadNpilt.beta.0, file = "veadNpilt_beta.RData")
+save(veadNpilt.mean.0, file = "veadNpilt_mean.RData")
 
 
 
@@ -864,6 +1037,78 @@ for(i in 1:length(kps)){
 
 
 
+
+
+
+
+
+
+
+
+
+
+#geom rida, asümtoot: file geom_series
+ser = veadNpilt.beta[-c(1:4)];plot(ser)
+#for(i in 1:(length(ser0)-1)){ser[i] = ser0[i]-ser0[i+1]}
+
+find.geom = function(params,ser){
+  #params = ops$par
+  a = params[1]
+  r = params[2]
+  asym = params[3]
+  #pos1 = params[4]
+  
+  kk = 1:length(ser)
+  points = a*r**kk + asym
+  #d.points = data.frame(y = points, x = kk+pos1)
+  #d.ser = data.frame(y = ser, x = 1:length(ser))
+  #mse = sum(sqrt(rowSums(d.points-d.ser)**2))
+  mse = mean(sqrt((points-ser)**2))
+  mse
+}
+
+ops = optim(par = c(3,1,0.12),fn = find.geom, ser = ser, method = "BFGS")
+
+
+gs=function(par,N0,N1){
+  a = par[1];r=par[2];asym=par[3];#pos1=par[4]
+  kk = N0:N1
+  points = a*r**kk + asym
+  points = data.frame(y = points, x = kk)
+  points
+}
+
+tt = gs(ops$par,1,50)
+
+
+N = 100
+values = c()
+for(NN in 1:(N-length(ser))){
+  ops = optim(par = c(3,0.6,0.12,0.1),fn = find.geom, N = N, ser = ser, method = "BFGS")
+  values[NN] = ops$value
+}
+
+pos1 = which.min(values)
+ops = optim(par = c(3,0.6,0.12),pos1 = pos1,fn = find.geom, N = N, ser = ser, method = "BFGS")
+
+gs=function(par,N0,N1){
+  a = par[1];r=par[2];asym=par[3]
+  kk = N0:N1
+  points = a*r**kk + asym
+  points
+}
+serx = data.frame(x = 5:15, y = ser)
+plot(serx$x, serx$y,xlim = c(5,25), ylim = c(0.175,0.195))
+
+gs.pred = data.frame(x = 1:50, y = gs(ops$par,1,50))
+points(gs.pred$x, gs.pred$y)
+
+
+plot(ser0);
+plot(y = gs(ops$par,14)[4:14],x=c(4:14))
+
+tt = find.geom(c(3,0.6,0.12,0.1), 20, ser = ser)
+#ei tööta nagu vaja
 
 
 
@@ -874,9 +1119,14 @@ plot(unlist(veadNpilt.beta), type = "o")
 plot(unlist(veadNpilt.epakernel), type = "o")
 
 par(mfrow=c(1,3))
-plot(unlist(veadNpilt.1), type = "o", ylab = "RMSE: mean", xlab = "Hinnangus kasutatud pilte", ylim = c(0.18,0.235))
-plot(unlist(veadNpilt.beta), type = "o", ylab = "RMSE: beta", xlab = "Hinnangus kasutatud pilte", ylim = c(0.18,0.235))
-plot(unlist(veadNpilt.epakernel), type = "o", ylab = "RMSE: Epanechnikov kernel", xlab = "Hinnangus kasutatud pilte", ylim = c(0.18,0.235))
+plot(unlist(veadNpilt.mean.0), type = "o", ylab = "RMSE: mean", xlab = "Hinnangus kasutatud pilte", ylim = c(0.18,0.235))
+plot(unlist(veadNpilt.beta.0), type = "o", ylab = "RMSE: beta", xlab = "Hinnangus kasutatud pilte", ylim = c(0.18,0.235))
+plot(unlist(veadNpilt.epakernel.0), type = "o", ylab = "RMSE: Epanechnikov kernel", xlab = "Hinnangus kasutatud pilte", ylim = c(0.18,0.235))
+
+#
+veadNpilt = vector("list",3)
+veadNpilt[[1]] = veadNpilt.1;veadNpilt[[2]] = veadNpilt.beta;veadNpilt[[3]] = veadNpilt.epakernel;
+#save(veadNpilt, file = "veadNpilt_landsat.RData")
 
 
 #[1] 0.2230905 0.2135501 0.2068331 0.2028079 0.2003610 0.1987671 0.1976517 0.1968266 0.1961908 0.1956853 0.1952738
@@ -963,107 +1213,96 @@ plot(xx,dbeta(xx, shape1 = a, shape2 = b))
 #seega on vaja mitmetasemelist mudelit!? või "erindid" välja võtta?
 
 #millised pildid kõige enam juurde annavad?
-#
+load(file = "knn_epa.RData")
+tvmaht = 2
+data_puud = taks.info[taks.info$aproovitykk_id %in% sidxx,]
+puud_true =  data_puud[,7:10]
+data_puud = data_puud[,(4*tvmaht-1):(4*tvmaht+2)]
+
+best_vars = unlist(knn.epa[[1]][[1]][5])
+wgt = unlist(knn.epa[[2]][5])
+dex = data[,c("aproovitykk_id",best_vars)]
+dex = dex[dex$aproovitykk_id %in% sidxx,]
+dex[,-1] = t((t(as.matrix(dex[,-1])))*wgt)
+dex$cl = "cl"
+knn.result.epa = fun_agre_kernel(dex, data_puud, k = 5, sid = sidxx, kernel = epa)
+dp = merge(knn.result.epa, taks.info, by = "aproovitykk_id", all.x = T)
+sqrt(sum((dp[,11:14]-dp[,2:5])**2)/(dim(dp)[1]*4)) #lihtsalt kontrolliks, et oli õige andmebaas
+#ei old ju õige :D mul on pildikaupa vaja!
+
+load(file ="KNN_pbp_tv100_v2.RData", verbose = T)
+kp_data = data.frame()
+for(i in 1:15){
+  kp = kps[i]
+  kp_data0 = result.kp.tv100[[i]]; kp_data0$kp = kp
+  kp_data0 = merge(kp_data0, taks.info, all.x = T, by = "aproovitykk_id")
+  kp_data = rbind(kp_data, kp_data0)
+}
+
+kps0 = kps
+kps0 = kps0[-5]
 
 pilt.beta = c()
-for(i in 1:length(kps)){
-  seqs = c(1:length(kps))[-i]
-  kp_data = data.frame()
-  for(j in seqs){
-    kp = kps[j]
-    kp_data0 = result.kp.bfgs[[j]]; kp_data0$kp = kp
-    kp_data0 = merge(kp_data0, taks.info, all.x = T, by = "aproovitykk_id")
-    kp_data = rbind(kp_data, kp_data0)
-  }
-  kp_data[,2:5] = (kp_data[,2:5]*(dim(kp_data)[1]-1) + 0.5)/dim(kp_data)[1]
-  KNN_PBP = kp_data[,1:5] %>% group_by(aproovitykk_id) %>% summarise_all(funs(bets_fun(.,method = "mme")))
+for(i in 1:length(kps0)){
+  kp.out = kps0[i]
+  kp_data0 = kp_data[kp_data$kp != kp.out,]
+  kp_data0[,2:5] = (kp_data0[,2:5]*(dim(kp_data0)[1]-1) + 0.5)/dim(kp_data0)[1]
+  KNN_PBP = kp_data0[,1:5] %>% group_by(aproovitykk_id) %>% summarise_all(funs(dens1))
   KNN_PBP[,2:5] = KNN_PBP[,2:5] / rowSums(KNN_PBP[,2:5])
   dp = merge(KNN_PBP, taks.info, by = "aproovitykk_id", all.x = T)
-  #idx.df = merge(idx.df, KNN_PBP, by = "aproovitykk_id", all.x = T)
   viga = sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4)
   print(viga)
   pilt.beta[i] = viga
 }
+#0.1811502 andis beta, aga epa kernel isegi nõks parem
+par(mfrow=(c(1,1)))
+plot(pilt.beta-0.1786698) 
 
 
+#funktsioonina:
 
-
-pilt.beta - 0.1935926 
-
-plot(pilt.beta - 0.1935926 )
-min(pilt.beta)
-
-kps0 = kps
-kp_data = data.frame()
-for(i in 1:length(kps0)){
-  kp = kps0[i]
-  kp_data0 = result.kp.bfgs[[i]]; kp_data0$kp = kp
-  kp_data0 = merge(kp_data0, taks.info, all.x = T, by = "aproovitykk_id")
-  kp_data = rbind(kp_data, kp_data0)
-}
-data.kp = kp_data;
-data.kp1 = data.kp[,2:5]
-data.kp1 = (data.kp1*7191 + 0.5)/7192 ###7192 mitte 599!
-data.kp[,2:5] = data.kp1
-kp_data = data.kp
-KNN_PBP_BETA0 = kp_data[,1:5]
-KNN_PBP_BETA = KNN_PBP_BETA0 %>% group_by(aproovitykk_id) %>% summarise_all(funs(mean))
-kb1 = KNN_PBP_BETA
-rsm = rowSums(kb1[,2:5])
-kb1[,2:5] = kb1[2:5] / rsm
-dp = merge(kb1, taks.info, by = "aproovitykk_id", all.x = T)
-sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4)
-
-pilt.beta1 = c()
-for(i in 1:length(kps0)){
-  seqs = c(1:length(kps0))[-i]
-  kp_data = data.frame()
-  for(j in seqs){
-    kp = kps0[j]
-    kp_data0 = result.kp.bfgs[[j]]; kp_data0$kp = kp
-    kp_data0 = merge(kp_data0, taks.info, all.x = T, by = "aproovitykk_id")
-    kp_data = rbind(kp_data, kp_data0)
+kps0 = kpsatel
+min0 = 69; min = 0.17 #; min = 0
+out = c()
+out.rmse = c()
+j = 0
+while (min < min0) {
+  j = j+1
+  min0 = min
+  viga = c()
+  for(i in 1:length(kps0)){
+    kp.out = kps0[i]
+    df = df.sl[df.sl$kp.satel %in% kps0,]
+    df = df[df$kp.satel != kp.out,]
+    df[,2:5] = (df[,2:5]*(dim(df)[1]-1) + 0.5)/dim(df)[1]
+    KNN_PBP = df[,1:5] %>% group_by(aproovitykk_id) %>% summarise_all(funs(bets_fun2sd))
+    KNN_PBP[,2:5] = KNN_PBP[,2:5] / rowSums(KNN_PBP[,2:5])
+    dp = merge(KNN_PBP, taks.info, by = "aproovitykk_id", all.x = T)
+    rmse = sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4)
+    viga[i] = rmse
   }
-  kp_data[,2:5] = (kp_data[,2:5]*(dim(kp_data)[1]-1) + 0.5)/dim(kp_data)[1]
-  KNN_PBP = kp_data[,1:5] %>% group_by(aproovitykk_id) %>% summarise_all(funs(bets_fun(.,method = "mme")))
-  KNN_PBP[,2:5] = KNN_PBP[,2:5] / rowSums(KNN_PBP[,2:5])
-  dp = merge(KNN_PBP, taks.info, by = "aproovitykk_id", all.x = T)
-  #idx.df = merge(idx.df, KNN_PBP, by = "aproovitykk_id", all.x = T)
-  viga = sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4)
+  out.rmse[j] = min
   print(viga)
-  pilt.beta1[i] = viga
+  out[j] = kps0[which.min(viga)]
+  kps0 = kps0[-which.min(viga)]
+  min = min(viga);
+  print(c(min,min0))
 }
 
-plot(pilt.beta1 - 0.1898324)
-#ülimarginaalselt saab paremaks, ehk 0.1893145
+par(mfrow = c(1,1))
+plot(out.rmse, type = "o", xlab = "Mitu kehvemat välja jäetud", ylab = "RMSE")
+min(out.rmse); length(out)
 
 
-#keskmisega:
-kps0 = kps
-kps0 = kps0[-1]
-pilt.mean = c()
-for(i in 1:length(kps0)){
-  seqs = c(1:length(kps0))[-i]
-  kp_data = data.frame()
-  for(j in seqs){
-    kp = kps0[j]
-    kp_data0 = result.kp.bfgs[[j]]; kp_data0$kp = kp
-    kp_data0 = merge(kp_data0, taks.info, all.x = T, by = "aproovitykk_id")
-    kp_data = rbind(kp_data, kp_data0)
-  }
-  kp_data[,2:5] = (kp_data[,2:5]*(dim(kp_data)[1]-1) + 0.5)/dim(kp_data)[1]
-  KNN_PBP = kp_data[,1:5] %>% group_by(aproovitykk_id) %>% summarise_all(funs(mean))
-  KNN_PBP[,2:5] = KNN_PBP[,2:5] / rowSums(KNN_PBP[,2:5])
-  dp = merge(KNN_PBP, taks.info, by = "aproovitykk_id", all.x = T)
-  #idx.df = merge(idx.df, KNN_PBP, by = "aproovitykk_id", all.x = T)
-  viga = sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4)
-  print(viga)
-  pilt.mean[i] = viga
-}
 
-plot(pilt.mean -  0.1914351)
-min(pilt.mean) # 0.1934248 pärast 1.sammu; 2.samm: 0.1928839; 0.1921768; 0.1914351
-#0.1914351
+
+
+
+
+
+
+
+
 
 ###########################################
 #kernel density, nt epa

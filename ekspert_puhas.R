@@ -11,8 +11,7 @@ fun_agre_epa = function(data, data_puud, k)
   props = apply(dist1, 1, epa)
   props = t(props)
   indxprops = cbind(index1, props)
-  data_puud = data_puud
-  t(apply(indxprops, 1, agre))
+  t(apply(indxprops, 1, agre, data_puud))
 }
 
 epa = function(vec){
