@@ -513,16 +513,36 @@ t(conf1)
 
 xx = c(min(data$max.hinnang),seq(0.32,1,0.01))
 pc = c()
-
+nr.taks = c()
 for(i in 1:length(xx)){
   data.max1 = data[data$max.hinnang >= xx[i],]
   conf1 = table(data.max1$max.hinnang.liik, data.max1$max.liik)
   pc0 = sum(diag(conf1)) / sum(conf1)
   pc = c(pc,pc0)
+  #palju on takseeralasid, kus maks hinnang on suurem kui xx[i]:
+  nr.taks0 = dim(data.max1)[1]
+  nr.taks = c(nr.taks, nr.taks0)
 }
+
+nr.taks = nr.taks / 455
 
 par(mfrow = c(1,1))
 plot(xx,pc, type = "o", col = rgb(red = 0, green = 0, blue = 0, alpha = 0.69), pch = 16, xlab = "Osakaalude hinnangu maksimum", ylab = "Täpsus")
+#siia saab ka lisada, kui palju selliseid takseeralasid on!
 
 min(xx[pc > 0.95]) #Kui mingi liigi osakaal on üle 58% hinnatud, siis 95% juhtudek on see kõige levinum liik
 min(xx[pc >= 1]) #Kui mingi liigi osakaal on üle 73% hinnatud, siis kõikidel juhtudel on see olnud kõige levinum liik
+
+par(mfrow = c(1,1))
+par(mar = c(5, 4, 4, 4) + 0.3)
+plot(x = xx, y = pc, type = "o", xlab = "Osakaalude hinnangu maksimum", ylab = "Täpsus", ylim = c(0,1),pch = 16,col = rgb(red = 0, green = 0, blue = 0, alpha = 0.69)) #RMSE: root-mean-squared-error
+par(new = TRUE)
+plot(x = xx, y = nr.taks ,type = "o", axes = FALSE, bty = "n", xlab = "", ylab = "", pch = 16, ylim = c(0,1),col = rgb(red = 0, green = 0, blue = 0.5, alpha = 0.369))
+axis(side=4, at = 0:15)
+mtext("% takseeraladest", side=4, line=3)
+
+
+
+
+
+
