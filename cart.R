@@ -226,18 +226,18 @@ sqrt(mean((dats[,14] - dats[,5])**2))
 
 
 
-#########CART 506 #####################
+#########CART 455 #####################
 
 setwd("A:/MAKA/TEST")
+mds = seq(4,26, by = 2)
+msls = c(1:30)
 carts = vector("list", length = length(msls))
-mds = seq(1,15, by = 1)
-msls = c(5:20)
 for(j in 1:length(msls)){
   vec = vector("list", length = length(mds))
   for(k in 1:length(mds)){
     jj = msls[j]
     md = mds[k]
-    name <- paste("CART506_",jj,md,".csv", sep = "")
+    name <- paste("CART_455_VALITUD_",jj,md,".csv", sep = "")
     vec[[k]] <- read.csv(name)
   }
   carts[[j]] = vec
@@ -269,44 +269,43 @@ for(j in 1:length(msls)){
   }
 }
 
-require(pheatmap)
+#ggplotiga?
+#https://stackoverflow.com/questions/36852101/r-legend-title-or-units-when-using-pheatmap
+library(ggplot2)
+library(reshape2)
+moos = as.data.frame(koos)
+colnames(moos) = paste("Max_depth_", seq(4,26,2), sep = "")
+moos$msl = paste("Min_sample_leaf_", 1:30, sep = "")
+moos$sort = 1:30
 
-pheatmap(mav, cluster_rows = F, cluster_cols = F)
-pheatmap(kuv, cluster_rows = F, cluster_cols = F)
-pheatmap(ksv, cluster_rows = F, cluster_cols = F)
-pheatmap(muv, cluster_rows = F, cluster_cols = F)
-pheatmap(koos, cluster_rows = F, cluster_cols = F)
+moos.m <- melt(moos,id.vars = c("msl","sort"))
+moos.m$msl = as.factor(moos.m$msl)
+moos.m$msl <- factor(moos.m$msl, levels= unique((moos.m$msl)[order(moos.m$sort)]))
 
-require(gridExtra)
-require(grid)
-require(ggplot2)
-require(lattice)
 
-vv = vector("list", length = 4)
-vv[[1]] = mav;vv[[2]] = kuv;vv[[3]] = ksv;vv[[4]] = muv;
-plot_list=list()
-for (a in 1:4){
-  x=pheatmap(vv[[a]],cluster_rows = F, cluster_cols = F)
-  plot_list[[a]] = x[[4]]     ##to save each plot into a list. note the [[4]]
-}
-g<-do.call(grid.arrange,plot_list)
-#ggsave("CART_heatmap.pdf",g)
+plot = ggplot(moos.m,aes(variable,msl)) + geom_tile(aes(fill=value),color = "white") +
+  guides(fill=guide_colorbar("RMSE")) +
+  scale_fill_gradientn(colors=c("skyblue","yellow","tomato"),guide="colorbar") +
+  theme(axis.text.x = element_text(angle = 270, hjust = 0,vjust=-0.05))
+plot + labs(x = "", y = "")
 
-which(mav == min(mav), arr.ind = TRUE)
-which(kuv == min(kuv), arr.ind = TRUE)
-which(ksv == min(ksv), arr.ind = TRUE)
-which(muv == min(muv), arr.ind = TRUE)
-which(koos == min(koos), arr.ind = TRUE) #11 5 ehk msl16 ja md 5.
+which.cart = which(koos == min(koos), arr.ind = TRUE)[1,]
+which.cart
+cart = carts[[which.cart[1]]][[which.cart[2]]]
+cart = carts[[23]][[12]]
 
-setwd("A:/MAKA/TEST")
-cart = read.csv("CART506_165.csv")
-dats = merge(cart,taks.info, by = "aproovitykk_id", all.x = T)
+dp = merge(cart, taks.info, all.x = T, by = "aproovitykk_id")
+par(mfrow=C(2,2))
 dev.off()
 par(mfrow = c(2,2))
-plot(dats[,11],dats[,2], xlab = "MÄND", ylab = "CART: msl=16, max.depth=5", xlim = c(0,1), ylim = c(0,1))
-plot(dats[,12],dats[,3], xlab = "KUUSK", ylab = "CART: msl=16, max.depth=5", xlim = c(0,1), ylim = c(0,1))
-plot(dats[,13],dats[,4], xlab = "KASK", ylab = "CART: msl=16, max.depth=5", xlim = c(0,1), ylim = c(0,1))
-plot(dats[,14],dats[,5], xlab = "MUU", ylab = "CART: msl=16, max.depth=5", xlim = c(0,1), ylim = c(0,1))
+plot(dp[,11],dp[,2], xlab = "Mänd", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369), pch = 16)
+abline(lm(dp[,2] ~ dp[,11]))
+plot(dp[,12],dp[,3], xlab = "Kuusk", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369), pch = 16)
+abline(lm(dp[,3] ~ dp[,12]))
+plot(dp[,13],dp[,4], xlab = "Kask", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369), pch = 16)
+abline(lm(dp[,4] ~ dp[,13]))
+plot(dp[,14],dp[,5], xlab = "Muu", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369), pch = 16)
+abline(lm(dp[,5] ~ dp[,14]))
 
 
 #proovi bagging ja boosting (adaboost sklearn-is)

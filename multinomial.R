@@ -507,18 +507,15 @@ plot(dp[,14],dp[,4], xlab = "Muu", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), 
 
 #mingit liiki bagging; valime juhuslikud tunnused!
 #HETKEL ILMA MULLATA!
-var.mult = names(d70)[c(3, 5:38)] #3. on muld
-var.mult[1] = "factor(muld)"
-ssize = 10
-var.mult.sample = sample(var.mult,ssize)
-
+var.mult = names(d80)[c(5:38,47:60)] #3. on muld
+#var.mult[1] = "factor(muld)"
 
 pred = matrix(0,nrow = dim(d_80)[1], ncol = 4)
-N = 100; ssize = 4
+N = 1000; ssize = 5
 for(i in 1:N){
   var.mult.sample = sample(var.mult,ssize)
   formula = as.formula(paste("cl80", paste(var.mult.sample, collapse=" + "), sep=" ~ "))
-  m = stepAIC(multinom(formula, d80, maxit = 1000))
+  m = stepAIC(multinom(formula, d80, maxit = 10000), trace = F)
   #m = multinom(formula, d80, maxit = 100) #võtsin maxit 1000 pealt 100 peale
   pred0 = predict(m, newdata = d_80, type = "probs")
   pred = pred0 + pred
@@ -540,6 +537,197 @@ plot(dp[,14],dp[,5], xlab = "Muu", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1
 
 sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4) 
 #ssize = 3; N = 500: #0.2063837; N = 2500: 0.2065031
-#sama ilma kaaludeta: 0.2075632; 0.2056211; n500 mullaga 0.2054041, kui step direction default: 0.2052452
+#sama ilma kaaludeta: 0.2075632; 0.2056211; n500 mullaga 0.2054041/0.2054204 N1000/0.2061199 N1000 kaaludega
 #ssize 4 n500 0.2107895, n1000 mullaga 0.2088891, viimane d70: 0.2124759
+#ssize 10 N100 muld 0.230615, kui tõsta maxit 10000 peale, siis 0.2273758
+
+#otsustame, et parim on 3! aga kui muld mitte faktor vaid 0-1? ega vahet pole
+#ssize = 4 korral nüüd 0.2033682
+
+#nüüd kõik elemendid:
+N = 100; ssize = 8
+#obsinout = vector("list", length = 2); obsinout[[1]] = d80$aproovitykk_id;obsinout[[2]] = d_80$aproovitykk_id
+pred = matrix(0,nrow = dim(d_80)[1], ncol = 4)
+pred1 = data.frame("aproovitykk_id" = sidxx, "MA" = 0, "KU" = 0, "KS" = 0, "KX" = 0)
+for(i in 1:N){
+  print(i);print(Sys.time())
+  var.mult.sample = sample(var.mult,ssize)
+  formula = as.formula(paste("cl80", paste(var.mult.sample, collapse=" + "), sep=" ~ "))
+  m = stepAIC(multinom(formula, d80, maxit = 10000, trace = F), trace = F)
+  pred0 = predict(m, newdata = d_80, type = "probs")
+  pred0 = data.frame(pred0)
+  pred0 = pred0[,c("MA","KU","KS","KX")]
+  #pred[pred$aproovitykk_id %in% unlist(obsinout[[2]]),c("MA","KU","KS","KX")] = pred[pred$aproovitykk_id %in% unlist(obsinout[[2]]),c("MA","KU","KS","KX")] + pred0
+  pred = pred + pred0
+  for (obs in d80$aproovitykk_id) {
+    dobs = d80[!(d80$aproovitykk_id %in% obs),]
+    m = stepAIC(multinom(formula, dobs, maxit = 10000, trace = F), trace = F)
+    pred0 = predict(m, newdata = d80[d80$aproovitykk_id == obs,], type = "probs")
+    pred0 = pred0[c("MA","KU","KS","KX")]
+    pred1[pred1$aproovitykk_id == obs,c("MA","KU","KS","KX")] = pred1[pred1$aproovitykk_id == obs,c("MA","KU","KS","KX")] + pred0
+  }
+}
+pred$aproovitykk_id = d_80$aproovitykk_id
+pred1[pred1$aproovitykk_id %in% d_80$aproovitykk_id,2:5] = pred[,1:4]
+pred1[,2:5] = pred1[,2:5] / N
+
+dp = merge(pred1, taks.info, by = "aproovitykk_id", all.x = T)
+dev.off()
+par(mfrow = c(2,2))
+plot(dp[,11],dp[,2], xlab = "Mänd", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,12],dp[,3], xlab = "Kuusk", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,13],dp[,4], xlab = "Kask", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,14],dp[,5], xlab = "Muu", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+
+sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4) 
+#N100 ssize 4: 0.1987356
+#N100 ssize 5: 0.198063
+#N250 ssize 5: 0.1968571, ehk ennu kasvatamine suurt midagi juurde ei anna
+#N100 ssize 6: 0.1985812
+#N100 ssize 7: 0.1989825
+#n100 ssize 8: 0.1989967
+#n100 ssize 9: 0.1989967
+
+N = 100; ssize = 9
+#obsinout = vector("list", length = 2); obsinout[[1]] = d80$aproovitykk_id;obsinout[[2]] = d_80$aproovitykk_id
+pred = matrix(0,nrow = dim(d_80)[1], ncol = 4)
+pred1 = data.frame("aproovitykk_id" = sidxx, "MA" = 0, "KU" = 0, "KS" = 0, "KX" = 0)
+for(i in 1:N){
+  print(i);print(Sys.time())
+  var.mult.sample = sample(var.mult,ssize)
+  formula = as.formula(paste("cl80", paste(var.mult.sample, collapse=" + "), sep=" ~ "))
+  m = stepAIC(multinom(formula, d80, maxit = 10000, trace = F), trace = F)
+  pred0 = predict(m, newdata = d_80, type = "probs")
+  pred0 = data.frame(pred0)
+  pred0 = pred0[,c("MA","KU","KS","KX")]
+  #pred[pred$aproovitykk_id %in% unlist(obsinout[[2]]),c("MA","KU","KS","KX")] = pred[pred$aproovitykk_id %in% unlist(obsinout[[2]]),c("MA","KU","KS","KX")] + pred0
+  pred = pred + pred0
+  for (obs in d80$aproovitykk_id) {
+    dobs = d80[!(d80$aproovitykk_id %in% obs),]
+    m = stepAIC(multinom(formula, dobs, maxit = 10000, trace = F), trace = F)
+    pred0 = predict(m, newdata = d80[d80$aproovitykk_id == obs,], type = "probs")
+    pred0 = pred0[c("MA","KU","KS","KX")]
+    pred1[pred1$aproovitykk_id == obs,c("MA","KU","KS","KX")] = pred1[pred1$aproovitykk_id == obs,c("MA","KU","KS","KX")] + pred0
+  }
+}
+pred$aproovitykk_id = d_80$aproovitykk_id
+pred1[pred1$aproovitykk_id %in% d_80$aproovitykk_id,2:5] = pred[,1:4]
+pred1[,2:5] = pred1[,2:5] / N
+
+dp = merge(pred1, taks.info, by = "aproovitykk_id", all.x = T)
+dev.off()
+par(mfrow = c(2,2))
+plot(dp[,11],dp[,2], xlab = "Mänd", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,12],dp[,3], xlab = "Kuusk", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,13],dp[,4], xlab = "Kask", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,14],dp[,5], xlab = "Muu", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+
+sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4) 
+
+
+
+#multinomial w feature importance
+
+FI2 = read.csv("feature_IMP_500k.csv", header = T)
+imp10 = FI2$Feature[1:10]; imp10 = as.character(imp10)
+imp3 = FI2$Feature[1:3]; imp3 = as.character(imp3)
+formula.imp = as.formula(paste("cl70", paste(imp10, collapse=" + "), sep=" ~ "))
+formula.imp3 = as.formula(paste("cl70", paste(imp3, collapse=" + "), sep=" ~ "))
+
+m1imp = step(multinom(formula.imp3, d70, maxit = 1000)) #weights?
+#B11_kevad2 läks välja
+m2imp = stepAIC(multinom(formula.imp, d70, maxit = 1000)) #weights?
+#B11_kevad2 välja, AIC ka sama
+Anova(m1imp)
+
+tst = data.frame(predict(m1imp, newdata = d_70, type = "probs"))
+tst$aproovitykk_id = d_70$aproovitykk_id
+dp = merge(tst, taks.info, by = "aproovitykk_id", all.x = T)
+dev.off()
+par(mfrow = c(2,2))
+plot(dp[,11],dp[,5], xlab = "Mänd", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,12],dp[,3], xlab = "Kuusk", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,13],dp[,2], xlab = "Kask", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,14],dp[,4], xlab = "Muu", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+
+sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4)
+# 0.4795727 ilma weights; aga weights argument ei muuda midagi!?
+
+#npmr?
+require(npmr)
+
+RMSE.imps.min = c()
+for(j in 1:25){
+imps = FI2$Feature[1:j]; imps = as.character(imps)
+imps = c(imps,"muld")
+dd = d80
+dd0 = d_80
+Y = dd$cl80 #siia 70 või 80
+X = as.matrix(dd[imps]); 
+lammas = 1:500
+m1 = npmr(X = X, Y = Y, lambda = lammas)
+testX = as.matrix(dd0[imps])
+tst = predict.npmr(m1, testX)
+tst.train = predict.npmr(m1,X)
+
+RMSE.lammas = c()
+for(i in 1:200){
+  tt = as.data.frame(tst[,,i])
+  tt$aproovitykk_id = dd0$aproovitykk_id
+  tt.train = as.data.frame(tst.train[,,i])
+  tt.train$aproovitykk_id = dd$aproovitykk_id
+  tt = rbind(tt,tt.train)
+  dp = merge(tt, taks.info, by = "aproovitykk_id", all.x = T)
+  nms = names(dp); nms[2] = "V4";nms[3] = "V2"; nms[4] = "V1";nms[5] = "V3"; dp = dp[nms]
+  RMSE.lammas[i] = sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4)
+}
+RMSE.imps.min[j] = min(RMSE.lammas)
+}
+plot(RMSE.imps.min, type = "o")
+min(RMSE.imps.min); which.min(RMSE.imps.min)
+#d 70: 0.1915064, imps = 15
+#d 80:0.1911724, imps = 15
+
+
+
+tt = as.data.frame(tst[,,5])
+tt$aproovitykk_id = d_80$aproovitykk_id
+dp = merge(tt, taks.info, by = "aproovitykk_id", all.x = T)
+dev.off()
+par(mfrow = c(2,2))
+plot(dp[,11],dp[,5], xlab = "Mänd", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,12],dp[,3], xlab = "Kuusk", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,13],dp[,2], xlab = "Kask", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,14],dp[,4], xlab = "Muu", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+
+
+#aga sama asi orig. andmete peal?
+tst.train = predict.npmr(m1,X)
+
+tt.train = as.data.frame(tst.train[,,5])
+tt.train$aproovitykk_id = d80$aproovitykk_id
+tt = rbind(tt,tt.train)
+dp = merge(tt, taks.info, by = "aproovitykk_id", all.x = T)
+dev.off()
+par(mfrow = c(2,2))
+plot(dp[,11],dp[,5], xlab = "Mänd", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,12],dp[,3], xlab = "Kuusk", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,13],dp[,2], xlab = "Kask", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+plot(dp[,14],dp[,4], xlab = "Muu", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369))
+
+nms = names(dp); nms[2] = "V4";nms[3] = "V2"; nms[4] = "V1";nms[5] = "V3"; dp = dp[nms]
+sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4)
+#0.1979767
+
+
+
+
+
+
+
+
+
+
+
+
 

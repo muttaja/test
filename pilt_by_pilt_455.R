@@ -35,6 +35,9 @@ length(unique(kw455$aproovitykk_id))
 kw455 = kw455[,-11] #B10 on väärakas
 length(unique(kw455$aproovitykk_id))
 sentinel455 = kw455[kw455$satel == "S2",]
+land455 = kw455[kw455$satel == "LC08",]
+land455 = land455[,c(1:3,13:37)]
+land455 = land455[,-10]
 
 length(unique(sentinel455$aproovitykk_id))
 
@@ -42,5 +45,25 @@ setwd("A:/MAKA/TEST/test")
 save(kw455, file = "kw455.RData")
 write.csv(kw455, file = "kw455.csv")
 write.csv(sentinel455, file = "sentinel455.csv")
+write.csv(land455, file = "landsat455.csv")
 
-unique(sentinel455$muld)
+sc = sentinel455[,c(2,4:12)] %>% group_by(kp) %>% mutate_all(funs(scale))
+sentinel455sc = sentinel455; sentinel455sc[,4:12] = sc[,2:10]
+
+write.csv(sentinel455sc, file = "sentinel455sc.csv")
+
+#sentinel ja landsat koos?
+sc1 = kw455[,c(2,4:19)] %>% group_by(kp) %>% mutate_all(funs(scale))
+
+sl455sc = kw455; sl455sc[,4:19] = sc1[,2:17]
+sl455sc = sl455sc[,-19]
+
+write.csv(sl455sc, file = "sl455sc.csv")
+
+land455sc = sl455sc[sl455sc$satel == "LC08",]
+land455sc = land455sc[,c(1:3,13:37)]; 
+land455sc = land455sc[,-10] #B9 ehk cirrus
+write.csv(land455sc, file = "landsat455sc.csv")
+
+
+

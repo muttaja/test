@@ -59,3 +59,11 @@ sum((raied2[2,10:13] - raied2[2,21:24])**2)
 table(raied2$raie2)
 hist(raied2$arv_maht_es)
 
+id_ok2 = raied2[raied2$raie2 == 0,]$aproovitykk_id
+
+load("ID_OK.RData", verbose = T)# 174
+sid507 = c(id_ok, id_ok2) #507
+save(sid507, file = "sid507.RData")
+
+
+

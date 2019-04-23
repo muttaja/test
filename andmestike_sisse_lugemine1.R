@@ -1,6 +1,6 @@
 #andmete sisselugemine
-setwd( "C:/Users/Mats/Documents/Kool/MAKAT÷÷/loplik_andmestik/naidised/SMI")
-#setwd("A:/MAKA/d2_13.11.2018_esimene_andmekaust_nimi_korrastamata/naidised/SMI")
+#setwd( "C:/Users/Mats/Documents/Kool/MAKAT÷÷/loplik_andmestik/naidised/SMI")
+setwd("A:/MAKA/d2_13.11.2018_esimene_andmekaust_nimi_korrastamata/naidised/SMI")
 katvus = read.csv("Kagu-Eesti_15m_katvus.csv")
 korgus = read.csv("Kagu-Eesti_15m_korgus.csv")
 sat = read.csv("smi_prt_13_17_pixphv-heledused.csv")

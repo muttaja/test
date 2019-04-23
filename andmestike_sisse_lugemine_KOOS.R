@@ -46,5 +46,6 @@ lgn_sep$kp = as.Date(lgn_sep$kp, format="%Y%j") #kuupäeva formaat: aasta ja mitm
 
 #liidame ülejäänud andmestiku juurde tagasi
 sat_sep_koos = data.frame(rbind(sat_sep1, lgn_sep))
+
 sat_sep_koos$satel[sat_sep_koos$satel  == "LC"] = "LC08" #sama satelliit
 sat_sep_koos$satel[sat_sep_koos$satel  == "S2AL1C" | sat_sep_koos$satel  == "S2BL1C"] = "S2"

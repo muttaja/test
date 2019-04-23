@@ -16,6 +16,8 @@ list.files()
 all_landsat_bands <- list.files(pattern = ".TIF$",full.names = TRUE)
 
 landsat_band2 <- raster(all_landsat_bands[1])
+landsat_band3 <- raster(all_landsat_bands[2])
+landsat_band4 <- raster(all_landsat_bands[3])
 
 plot(landsat_band2, col = gray(0:100 / 100))
 
@@ -53,3 +55,71 @@ plotRGB(crp,
         axes = TRUE,
         main = "RGB composite image\n Landsat Bands 4, 3, 2")
 box(col = "white")
+
+
+
+################# kuidas koordinaadid ja kanalid kätte saab!?
+landsat_band2 #see on teise kanali info
+ext = c(483800, 515000, 6440000, 6468800)
+lb2 = crop(landsat_band2, ext)
+par(mfrow = c(1,1))
+plot(lb2, col = gray(0:100 / 100))
+
+#parem tartu ümbrus? vasak ülemine nurk luunja sild, täpselt üle vooremäe jookseb kaart
+ext = c(493800, 510000, 6455000, 6468800)
+lb3 = crop(landsat_band3, ext)
+par(mfrow = c(1,1))
+plot(lb3, col = gray(0:100 / 100))
+
+ext = c(493800, 510000, 6455000, 6468800)
+lb4 = crop(landsat_band4, ext)
+par(mfrow = c(1,1))
+plot(lb4, col = gray(0:100 / 100))
+
+
+crp = crop(landsat_csf_br, ext)
+par(col.axis = "white", col.lab = "white", tck = 0)
+plotRGB(crp,
+        r = 3, g = 2, b = 1,
+        stretch = "lin",
+        axes = TRUE,
+        main = "RGB composite image\n Landsat Bands 4, 3, 2")
+box(col = "white")
+
+#väike luunja nurk testiks
+ext = c(493800, 500000, 6465000, 6468800)
+crp = crop(landsat_csf_br, ext)
+par(col.axis = "white", col.lab = "white", tck = 0)
+plotRGB(crp,
+        r = 3, g = 2, b = 1,
+        stretch = "lin",
+        axes = TRUE,
+        main = "RGB composite image\n Landsat Bands 4, 3, 2")
+box(col = "white")
+require(raster)
+rasmat = as.matrix(crp)
+#töötab, aga ei ole koordinaate :/
+
+
+
+spts <- rasterToPoints(crp, spatial = TRUE)
+require(rgdal)
+llprj <-  "+proj=longlat +ellps=WGS84 +datum=WGS84 +no_defs +towgs84=0,0,0"
+llpts <- spTransform(spts, CRS(llprj))
+print(head(llpts))
+
+dfx <- as.data.frame(llpts)
+#25959x9 selle üliväikse nurga korral. pilte on 24(?)
+#suure kaardi korral: 248400. OK! See peaks olema hallatav
+#nüid kust saada katastrikaart!?
+
+
+
+
+
+
+
+
+
+
+

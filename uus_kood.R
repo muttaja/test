@@ -1,3 +1,0 @@
-#giti fail
-
-#läpakas
