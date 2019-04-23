@@ -301,7 +301,7 @@ plot(dp[,13],dp[,4], xlab = "Kask", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1),
 abline(lm(dp[,4] ~ dp[,13]))
 plot(dp[,14],dp[,5], xlab = "Muu", ylab = "RMSE", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369), pch = 16)
 abline(lm(dp[,5] ~ dp[,14]))
-
+#N250: 0.195866. 7 tunnust 20 seast, lambda 7
 
 
 
