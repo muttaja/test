@@ -747,10 +747,20 @@ vahed_kevad = data.frame(dk[,nk2] - dk[,nk1])
 names(vahed_kevad) = nkv
 
 dk = cbind(dk, vahed_kevad)
-save(dk, file = "lnds_to_sent_linear_model_16_04_2019.RData")
+#save(dk, file = "lnds_to_sent_linear_model_16_04_2019.RData")
 
-load(file = "lnds_to_sent.RData")
+load(file = "lnds_to_sent.RData", verbose = T)
 
 #load(file = "koond455_uus_landsat_to_sentinel_mudel.RData") #nimi: data
 #lıpuks sai selline andmestik koos mullaga
+
+#Random foresti / cart jaoks asendame skaleeritud v‰‰rtused tagasi originaaldiega
+df = read.csv('A:/MAKA/TEST/test/d506_100.csv')
+dk455 = dk[dk$aproovitykk_id %in% df$aproovitykk_id,]
+df[names(dk)[-1]] = dk455[names(dk)[-1]]
+
+
+
+
+
 

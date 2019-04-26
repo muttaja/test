@@ -1469,7 +1469,31 @@ opti.beta = function(par1,df){
 beta.opt = optim(par = c(69,1), fn = opti.beta, df = data.kp, lower=c(0,Inf), upper=c(1,Inf), method = "L-BFGS-B")
 #see ei tööta :S
 
+
+
+#plot enne välja jätmist
+
 #save(rfall, file = "RF_SENT_LANDSAT_PBP.RData")
+load(file = "RF_SENT_LANDSAT_PBP.RData", verbose = T)
+#rfall
+
+df = rfall
+df[,1:4] = (df[,1:4]*5488 + 0.5)/5489
+beta.pbp = df[,1:5] %>% group_by(aproovitykk_id) %>% summarise_all(funs(bets_fun))
+dp = merge(beta.pbp, taks.info, by = "aproovitykk_id", all.x = T)
+dp[,2:5] = dp[,2:5]/rowSums(dp[,2:5])
+
+dev.off()
+par(mfrow = c(2,2))
+plot(dp[,11],dp[,2], xlab = "Mänd", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369), pch = 16)
+abline(lm(dp[,2] ~ dp[,11]))
+plot(dp[,12],dp[,3], xlab = "Kuusk", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369), pch = 16)
+abline(lm(dp[,3] ~ dp[,12]))
+plot(dp[,13],dp[,4], xlab = "Kask", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369), pch = 16)
+abline(lm(dp[,4] ~ dp[,13]))
+plot(dp[,14],dp[,5], xlab = "Muu", ylab = "Hinnang", xlim = c(0,1), ylim = c(0,1), col = rgb(red = 0, green = 0, blue = 0, alpha = 0.369), pch = 16)
+abline(lm(dp[,5] ~ dp[,14]))
+
 
 
 #####################################################
@@ -1604,7 +1628,9 @@ plot(unlist(veadNpilt.beta.sample), type = "o", ylab = "RMSE: beta", xlab = "Hin
 plot(unlist(veadNpilt.epa.sample), type = "o", ylab = "RMSE: Epanechnikov kernel", xlab = "Hinnangus kasutatud pilte", ylim = c(0.17,0.235))
 
 #Piltide välja jätmine:
-
+rfall$kp.satel = paste(rfall$kp, rfall$satel)
+kpsatels = unique(rfall$kp.satel)
+df.sl = rfall
 
 
 kps0 = kpsatel
@@ -1620,8 +1646,8 @@ while (min < min0) {
     kp.out = kps0[i]
     df = df.sl[df.sl$kp.satel %in% kps0,]
     df = df[df$kp.satel != kp.out,]
-    #df[,1:4] = (df[,1:4]*(dim(df)[1]-1) + 0.5)/dim(df)[1]
-    KNN_PBP = df[,1:5] %>% group_by(aproovitykk_id) %>% summarise_all(funs(mean))
+    df[,1:4] = (df[,1:4]*(dim(df)[1]-1) + 0.5)/dim(df)[1]
+    KNN_PBP = df[,1:5] %>% group_by(aproovitykk_id) %>% summarise_all(funs(bets_fun))
     KNN_PBP[,2:5] = KNN_PBP[,2:5] / rowSums(KNN_PBP[,2:5])
     dp = merge(KNN_PBP, taks.info, by = "aproovitykk_id", all.x = T)
     rmse = sqrt((sum((dp[,11:14]-dp[,2:5])**2))/dim(dp)[1]/4)

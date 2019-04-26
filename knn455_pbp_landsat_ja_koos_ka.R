@@ -2,6 +2,7 @@
 require(FNN)
 
 tvmaht = 2 #proportsioonid
+setwd("A:/MAKA/TEST/test")
 data0 = read.csv("landsat455.csv")
 names(data0)
 
@@ -805,11 +806,12 @@ for(i in 1:length(kpsatels)){
 save(veadNpilt.mean.sample100, file = "KNN_veadNpilt_mean_sample500.RData")
 
 
+#KNN PBP, siin veel 500 samplega puudu:
 
 par(mfrow=c(1,3))
-plot(unlist(veadNpilt.mean.sample100), type = "o", ylab = "RMSE: mean", xlab = "Hinnangus kasutatud pilte", ylim = c(0.18,0.235))
-plot(unlist(veadNpilt.beta.sample100), type = "o", ylab = "RMSE: beta", xlab = "Hinnangus kasutatud pilte", ylim = c(0.18,0.235))
-plot(unlist(veadNpilt.epa.sample100), type = "o", ylab = "RMSE: Epanechnikov kernel", xlab = "Hinnangus kasutatud pilte", ylim = c(0.18,0.235))
+plot(unlist(veadNpilt.mean.sample100), type = "o", ylab = "RMSE: mean", xlab = "Hinnangus kasutatud pilte", ylim = c(0.175,0.235))
+plot(unlist(veadNpilt.beta.sample100), type = "o", ylab = "RMSE: beta", xlab = "Hinnangus kasutatud pilte", ylim = c(0.175,0.235))
+plot(unlist(veadNpilt.epa.sample100), type = "o", ylab = "RMSE: Epanechnikov kernel", xlab = "Hinnangus kasutatud pilte", ylim = c(0.175,0.235))
 
 
 
